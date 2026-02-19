@@ -1,8 +1,10 @@
+console.log("script loaded");
 /* ===============================
    GLOBAL VARIABLES
 ================================ */
 let cart = [];
 let total = 0;
+
 const WEBHOOK = "https://script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec";
 
 
