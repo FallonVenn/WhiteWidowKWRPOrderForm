@@ -5,13 +5,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<img src="image.png" alt="KWRP White Widow Logo" width="150">
-  <h1>KWRP White Widow POS</h1>
 
-  <h2>Order Entry</h2>
+<img src="image.png" alt="KWRP White Widow Logo" width="150">
+<h1>KWRP White Widow POS</h1>
+
+<h2>Order Entry</h2>
 
 Employee:
-<select id="employee" name="employee" required>
+<select id="employee" required>
   <option value="">Select Employee</option>
   <option>Daniel Taylor</option>
   <option>Jeremy Cobain</option>
@@ -23,59 +24,40 @@ Employee:
 <br><br>
 
 Buyer:
-<input id="buyer" name="buyer" placeholder="Enter buyer name" required>
+<input id="buyer" placeholder="Enter buyer name" required>
 <br><br>
 
 Item:
 <select id="item" onchange="toggleTabPaymentItem()">
   <option value="AK-47 2g Bag" data-price="1500">AK-47 2g Bag - $1500 per</option>
   <option value="Amnesia 2g Bag" data-price="1500">Amnesia 2g Bag - $1500 per</option>
-  <option value="Gelato 2g Bag" data-price="1500">Gelato 2g Bag - $1500 per</option>
-  <option value="OG Kush 2g Bag" data-price="1500">OG Kush 2g Bag - $1500 per</option>
-  <option value="Purple Haze 2g Bag" data-price="1500">Purple Haze 2g Bag - $1500 per</option>
-  <option value="Skunk 2g Bag" data-price="1500">Skunk 2g Bag - $1500 per</option>
-  <option value="White Widow 2g Bag" data-price="1500">White Widow 2g Bag - $1500 per</option>
-  <option value="Zkittles 2g Bag" data-price="1500">Zkittles 2g Bag - $1500 per</option>
-  <option value="AK-47 Joint" data-price="1800">AK-47 Joint - $1800 per</option>
-  <option value="Amnesia Joint" data-price="1800">Amnesia Joint - $1800 per</option>
-  <option value="Gelato Joint" data-price="1800">Gelato Joint - $1800 per</option>
-  <option value="OG Kush Joint" data-price="1800">OG Kush Joint - $1800 per</option>
-  <option value="Purple Haze Joint" data-price="1800">Purple Haze Joint - $1800 per</option>
-  <option value="Skunk Joint" data-price="1800">Skunk Joint - $1800 per</option>
-  <option value="White Widow Joint" data-price="1800">White Widow Joint - $1800 per</option>
-  <option value="Zkittles Joint" data-price="1800">Zkittles Joint - $1800 per</option>
-  <option value="Strawberry Gummy Bears" data-price="2000">Strawberry Gummy Bears - $2000 per</option>
-  <option value="Raspberry Gummy Bears" data-price="2000">Raspberry Gummy Bears - $2000 per</option>
-  <option value="AK-47 Cookies" data-price="2000">AK-47 Cookies - $2000 per</option>
-  <option value="Skunk Cookies" data-price="2000">Skunk Cookies - $2000 per</option>
-  <option value="TAB_PAYMENT" data-price="0">Tab Payment - Custom Amount</option>
+  <option value="TAB_PAYMENT" data-price="0">Add Funds to Tab</option>
 </select>
 
 <span id="qtyLabel">Qty:</span>
 <input id="qty" type="number" value="1" min="1">
 
-<!-- hidden for tab payment -->
 <span id="tabAmountLabel" style="display:none;">Amount to Add to Tab:</span>
 <input id="tabPaymentAmount" type="number" min="1" style="display:none;" placeholder="Enter dollar amount">
 
 <button onclick="addItem()">Add to Cart</button>
-  
+
 <h3>Cart</h3>
 <ul id="cart"></ul>
 
 <h3>Total: $<span id="total">0</span></h3>
 
-Payment:
-<select id="payment" name="paymentType" required onchange="toggleTabField()">
+Payment Method:
+<select id="payment" required onchange="toggleTabField()">
   <option value="" disabled selected>Select Payment</option>
   <option value="Cash">Cash</option>
   <option value="Card">Card</option>
-  <option value="Tab">Tab</option>
+  <option value="Tab">Tab (Charge Purchase to Tab)</option>
 </select>
 
 <div id="tabBlock" style="display:none;">
   Tab:
-  <select id="tabSelect" name="tabSelect" onchange="toggleNewTabField()">
+  <select id="tabSelect">
     <option value="">Select Tab</option>
     <option value="NEW">New Tab</option>
   </select>
@@ -85,9 +67,9 @@ Payment:
   New Tab Name:
   <input id="newTabName" placeholder="Enter new tab name">
 </div>
+
 <br>
 
-<!-- Hidden form for Apps Script submission -->
 <form id="orderForm" action="https://script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec" method="post" target="hiddenIframe">
   <input type="hidden" name="data" id="formData">
 </form>
@@ -95,8 +77,6 @@ Payment:
 
 <button type="button" onclick="submitOrder()">Submit Order</button>
 
-<!-- LINK TO SCRIPT.JS -->
 <script src="script.js"></script>
-  
 </body>
 </html>
