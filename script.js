@@ -116,6 +116,64 @@ function toggleTabPaymentItem() {
 }
 
 // =====================================================
+// 💳 TOGGLE TAB NAME INPUT/DROPDOWN BASED ON TAB ITEM
+// =====================================================
+function toggleTabNameField() {
+  const itemValue = document.getElementById("item").value;
+  const newTabBlock = document.getElementById("newTabBlock");       // Text input for new tab
+  const newTabInput = document.getElementById("newTabName");
+  const existingTabBlock = document.getElementById("existingTabBlock"); // Dropdown for existing tabs
+  const existingTabSelect = document.getElementById("existingTabSelect");
+
+  if (itemValue === "TAB_CREATE") {
+    // show new tab input, hide existing tabs dropdown
+    newTabBlock.style.display = "block";
+    newTabInput.required = true;
+
+    if (existingTabBlock) {
+      existingTabBlock.style.display = "none";
+      existingTabSelect.value = "";
+      existingTabSelect.required = false;
+    }
+  } else if (itemValue === "TAB_ADD") {
+    // show existing tab dropdown, hide new tab input
+    if (newTabBlock) {
+      newTabBlock.style.display = "none";
+      newTabInput.value = "";
+      newTabInput.required = false;
+    }
+
+    if (existingTabBlock) {
+      existingTabBlock.style.display = "block";
+      existingTabSelect.required = true;
+
+      // populate existing tabs
+      existingTabSelect.innerHTML = '<option value="">Select Tab</option>';
+      const existingTabs = ["Alpha", "Beta", "Gamma"]; // Replace with dynamic list if needed
+      existingTabs.forEach(tab => {
+        const opt = document.createElement("option");
+        opt.value = tab;
+        opt.textContent = tab;
+        existingTabSelect.appendChild(opt);
+      });
+    }
+  } else {
+    // neither tab action selected → hide both
+    if (newTabBlock) {
+      newTabBlock.style.display = "none";
+      newTabInput.value = "";
+      newTabInput.required = false;
+    }
+    if (existingTabBlock) {
+      existingTabBlock.style.display = "none";
+      existingTabSelect.value = "";
+      existingTabSelect.required = false;
+    }
+  }
+}
+
+
+// =====================================================
 // 💳 TOGGLE PAYMENT TAB FIELDS
 // =====================================================
 function toggleTabField() {
