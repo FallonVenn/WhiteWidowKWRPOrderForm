@@ -203,30 +203,55 @@ async function submitOrder() {
     return;
   }
 
-  const payload = {
-    employee: document.getElementById("employee").value,
-    buyer: document.getElementById("buyer").value,
-    originalPaymentMethod: document.getElementById("payment").value,
-    cart,
-    total
+  const employee = document.getElementById("employee").value;
+  const buyer = document.getElementById("buyer").value;
+  const paymentMethod = document.getElementById("payment").value;
+
+  // Determine final tab if needed
+  let tabNameFinal = "";
+  if (paymentMethod === "Tab") {
+    const tabChoice = document.getElementById("tabSelect").value;
+    if (tabChoice === "NEW") {
+      tabNameFinal = document.getElementById("newTabName").value.trim();
+      if (!tabNameFinal) {
+        alert("Enter new tab name.");
+        return;
+      }
+    } else {
+      tabNameFinal = tabChoice;
+    }
+  }
+
+  // Split cart
+  const itemCart = cart.filter(c => c.isTabPayment === false);
+  const tabCart = cart.filter(c => c.isTabPayment === true);
+
+  // Build payloads
+  const itemPayload = {
+    employee,
+    buyer,
+    paymentType: "Item Sale", // Apps Script routes to Sales Log
+    originalPaymentMethod: paymentMethod,
+    tabName: "",
+    cart: itemCart,
+    total: itemCart.reduce((sum, i) => sum + i.lineTotal, 0)
+  };
+
+  const tabPayload = {
+    employee,
+    buyer,
+    paymentType: "Tab", // Apps Script routes to Tabs Log
+    originalPaymentMethod: paymentMethod,
+    tabName: tabNameFinal,
+    cart: tabCart,
+    total: tabCart.reduce((sum, i) => sum + i.lineTotal, 0)
   };
 
   try {
-    await fetch(WEBHOOK, {
-      method: "POST",
-      mode: "no-cors",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "text/plain;charset=utf-8" }
-    });
-
-    alert("Order submitted!");
-  } catch (err) {
-    console.error(err);
-    alert("Submit failed.");
-  }
-
-  cart = [];
-  total = 0;
-  document.getElementById("cart").innerHTML = "";
-  document.getElementById("total").textContent = "0";
-}
+    // Post Item Sales
+    if (itemCart.length > 0) {
+      await fetch(WEBHOOK, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ data: JSON.stringify(itemPayload) }), // 👈 wrap as `data`
+        headers: { "Content-Ty
