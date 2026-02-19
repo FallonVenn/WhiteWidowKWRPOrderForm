@@ -217,50 +217,134 @@ function toggleTabField() {
 }
 
 // =====================================================
-// 🧾 ADD ITEM TO CART
+// 🧾 ADD ITEM TO CART (REAL VERSION)
 // =====================================================
 function addItem() {
-  const itemSelect = document.getElementById("item");
+  const category = document.getElementById("category").value;
+  const itemEl = document.getElementById("item");
+  const itemName = itemEl.value;
+  const price = Number(itemEl.selectedOptions[0]?.dataset.price || 0);
+
   const qty = Number(document.getElementById("qty")?.value || 1);
   const tabAmount = Number(document.getElementById("tabPaymentAmount")?.value || 0);
+  const newTabName = document.getElementById("newTabName")?.value || "";
+  const existingTab = document.getElementById("existingTabSelect")?.value || "";
 
-  if (!itemSelect || !itemSelect.value) {
+  if (!itemName) {
     alert("Select an item first.");
     return;
   }
 
-  const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-  const itemName = itemSelect.value;
-  let price = Number(selectedOption.dataset.price || 0);
-
-  // tab deposits use custom amount
-  if (itemName === "TAB_CREATE" || itemName === "TAB_ADD") {
-    if (!tabAmount || tabAmount <= 0) {
-      alert("Enter tab amount.");
+  // =============================
+  // TAB CREATE
+  // =============================
+  if (itemName === "TAB_CREATE") {
+    if (!newTabName) {
+      alert("Enter new tab name.");
       return;
     }
-    price = tabAmount;
+
+    if (!tabAmount || tabAmount <= 0) {
+      alert("Enter deposit amount.");
+      return;
+    }
+
+    cart.push({
+      type: "TAB_CREATE",
+      name: newTabName,
+      amount: tabAmount
+    });
+
+    total += tabAmount;
   }
 
-  const lineTotal = price * qty;
+  // =============================
+  // TAB ADD
+  // =============================
+  else if (itemName === "TAB_ADD") {
+    if (!existingTab) {
+      alert("Select existing tab.");
+      return;
+    }
 
-  cart.push({
-    item: itemName,
-    qty,
-    price,
-    lineTotal
-  });
+    if (!tabAmount || tabAmount <= 0) {
+      alert("Enter amount.");
+      return;
+    }
 
-  total += lineTotal;
+    cart.push({
+      type: "TAB_ADD",
+      name: existingTab,
+      amount: tabAmount
+    });
 
-  console.log("Cart:", cart);
-  console.log("Total:", total);
+    total += tabAmount;
+  }
 
-  alert(`Added to cart. Total now $${total}`);
+  // =============================
+  // NORMAL ITEM
+  // =============================
+  else {
+    if (!qty || qty <= 0) {
+      alert("Enter quantity.");
+      return;
+    }
+
+    const lineTotal = price * qty;
+
+    cart.push({
+      type: "ITEM",
+      name: itemName,
+      price,
+      qty,
+      lineTotal
+    });
+
+    total += lineTotal;
+  }
+
+  renderCart();
 }
 
 // =====================================================
-// 🏦 SUBMIT ORDER
+// 🧾 RENDER CART
+// =====================================================
+function renderCart() {
+  const cartBox = document.getElementById("cart");
+  const totalBox = document.getElementById("total");
+
+  if (!cartBox) return;
+
+  cartBox.innerHTML = "";
+
+  cart.forEach(entry => {
+    const div = document.createElement("div");
+
+    if (entry.type === "ITEM") {
+      div.textContent =
+        `${entry.name} x${entry.qty} — $${entry.lineTotal}`;
+    }
+
+    if (entry.type === "TAB_CREATE") {
+      div.textContent =
+        `NEW TAB: ${entry.name} — $${entry.amount}`;
+    }
+
+    if (entry.type === "TAB_ADD") {
+      div.textContent =
+        `ADD TO TAB: ${entry.name} — $${entry.amount}`;
+    }
+
+    cartBox.appendChild(div);
+  });
+
+  if (totalBox) {
+    totalBox.textContent = `$${total}`;
+  }
+}
+
+// =====================================================
+// 🏦 SUBMIT ORDER (REAL)
 // =====================================================
 async function submitOrder() {
   if (cart.length === 0) {
@@ -268,27 +352,32 @@ async function submitOrder() {
     return;
   }
 
-  const payment = document.getElementById("payment")?.value || "";
-  const tabName = document.getElementById("tabSelect")?.value || "";
+  const payment = document.getElementById("payment").value;
+  const paymentTab = document.getElementById("tabSelect")?.value || "";
 
   const payload = {
+    action: "submitOrder",
+    paymentMethod: payment,
+    chargeTab: payment === "Tab" ? paymentTab : "",
     cart,
-    total,
-    payment,
-    tabName
+    total
   };
 
-  console.log("Submitting:", payload);
-
   try {
-    await fetch(WEBHOOK, {
+    const resp = await fetch(WEBHOOK, {
       method: "POST",
       body: JSON.stringify(payload)
     });
 
-    alert("Order submitted!");
+    const text = await resp.text();
+    console.log("Server response:", text);
+
+    alert("Order submitted.");
+
+    // reset
     cart = [];
     total = 0;
+    renderCart();
 
   } catch (err) {
     console.error(err);
