@@ -42,7 +42,7 @@ Category:
 
 <!-- ================= ITEM ================= -->
 Item:
-<select id="item" onchange="toggleTabPaymentItem()">
+<select id="item" onchange="toggleTabPaymentItem(); toggleTabNameField();">
   <option value="">Select item</option>
 </select>
 
@@ -57,7 +57,23 @@ Item:
        style="display:none;"
        placeholder="Enter dollar amount">
 
+<!-- NEW TAB NAME (only when TAB_CREATE selected) -->
+<div id="newTabBlock" style="display:none;">
+  New Tab Name:
+  <input id="newTabName" placeholder="Enter new tab name">
+</div>
+
+<!-- EXISTING TAB SELECT (only when TAB_ADD selected) -->
+<div id="existingTabBlock" style="display:none;">
+  Select Existing Tab:
+  <select id="existingTabSelect">
+    <option value="">Select Tab</option>
+    <!-- JS will populate this dynamically -->
+  </select>
+</div>
+
 <button type="button" onclick="addItem()">Add to Cart</button>
+
 
 <!-- ================= CART ================= -->
 <h3>Cart</h3>
