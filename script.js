@@ -6,6 +6,63 @@ console.log("script loaded");
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbyuwcxvwPPP_et6DpBX8gHFDCUd2MeEaiLzSLIBmCRuaiwgReww9CuVM1kueJJB8XkI/exec";
 
 // =====================================================
+// CART STATE
+// =====================================================
+let cart = [];
+let total = 0;
+
+// =====================================================
+// INIT EVENTS
+// =====================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const categoryEl = document.getElementById("category");
+  if (categoryEl) categoryEl.addEventListener("change", populateItems);
+
+  const itemEl = document.getElementById("item");
+  if (itemEl) itemEl.addEventListener("change", () => {
+    toggleTabPaymentItem();
+    toggleTabNameField();
+  });
+
+  const paymentEl = document.getElementById("payment");
+  if (paymentEl) paymentEl.addEventListener("change", toggleTabField);
+
+  const tabSelectEl = document.getElementById("existingTabSelect");
+  if (tabSelectEl) tabSelectEl.addEventListener("change", toggleNewTabField);
+
+  fetchTabs(); // load existing tabs from Apps Script
+});
+
+// =====================================================
+// FETCH EXISTING TABS
+// =====================================================
+async function fetchTabs() {
+  try {
+    const resp = await fetch(WEBHOOK + "?action=getTabs");
+    const data = await resp.json();
+    const existingTabSelect = document.getElementById("existingTabSelect");
+    if (!existingTabSelect || !Array.isArray(data)) return;
+
+    existingTabSelect.innerHTML = '<option value="">Select Tab</option>';
+    data.forEach(tabName => {
+      const opt = document.createElement("option");
+      opt.value = tabName;
+      opt.textContent = tabName;
+      existingTabSelect.appendChild(opt);
+    });
+
+    // Add "New Tab" option at the end
+    const newOpt = document.createElement("option");
+    newOpt.value = "NEW";
+    newOpt.textContent = "New Tab";
+    existingTabSelect.appendChild(newOpt);
+
+  } catch (err) {
+    console.error("Failed to fetch tabs:", err);
+  }
+}
+
+// =====================================================
 // 🗄 ITEM DATABASE
 // =====================================================
 const ITEM_DB = {
