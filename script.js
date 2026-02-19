@@ -80,6 +80,21 @@ function toggleNewTabField() {
    ADD ITEM TO CART
 ================================ */
 function addItem() {
+
+  // 🔒 REQUIRE EMPLOYEE + BUYER FIRST
+  const employee = document.getElementById("employee").value;
+  const buyer = document.getElementById("buyer").value;
+
+  if (!employee) {
+    alert("Select an employee before adding items.");
+    return;
+  }
+
+  if (!buyer) {
+    alert("Enter buyer name before adding items.");
+    return;
+  }
+
   const itemSelect = document.getElementById("item");
   const qty = Number(document.getElementById("qty").value);
   const itemValue = itemSelect.value;
