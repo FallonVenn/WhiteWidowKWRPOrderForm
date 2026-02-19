@@ -307,82 +307,109 @@ function addItem() {
 }
 
 // =====================================================
-// 🧾 RENDER CART
+// 🧾 RENDER CART (VISIBLE LIST)
 // =====================================================
 function renderCart() {
-  const cartBox = document.getElementById("cart");
-  const totalBox = document.getElementById("total");
+  const cartEl = document.getElementById("cart");
+  const totalEl = document.getElementById("total");
 
-  if (!cartBox) return;
+  if (!cartEl) {
+    console.error("Cart element not found (id='cart')");
+    return;
+  }
 
-  cartBox.innerHTML = "";
+  cartEl.innerHTML = "";
 
-  cart.forEach(entry => {
-    const div = document.createElement("div");
-
-    if (entry.type === "ITEM") {
-      div.textContent =
-        `${entry.name} x${entry.qty} — $${entry.lineTotal}`;
-    }
-
-    if (entry.type === "TAB_CREATE") {
-      div.textContent =
-        `NEW TAB: ${entry.name} — $${entry.amount}`;
-    }
-
-    if (entry.type === "TAB_ADD") {
-      div.textContent =
-        `ADD TO TAB: ${entry.name} — $${entry.amount}`;
-    }
-
-    cartBox.appendChild(div);
+  cart.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${item.name} x${item.qty} - $${item.price}`;
+    cartEl.appendChild(li);
   });
 
-  if (totalBox) {
-    totalBox.textContent = `$${total}`;
+  if (totalEl) {
+    totalEl.textContent = total;
   }
 }
 
 // =====================================================
-// 🏦 SUBMIT ORDER (REAL)
+// 🧾 ADD ITEM TO CART
 // =====================================================
-async function submitOrder() {
+function addItem() {
+  const category = document.getElementById("category").value;
+  const itemSelect = document.getElementById("item");
+  const qtyField = document.getElementById("qty");
+  const tabAmountField = document.getElementById("tabPaymentAmount");
+
+  if (!itemSelect.value) {
+    alert("Select an item first.");
+    return;
+  }
+
+  const itemName = itemSelect.value;
+  let qty = Number(qtyField.value) || 1;
+  let price = Number(itemSelect.selectedOptions[0].dataset.price) || 0;
+
+  // TAB actions use dollar amount instead
+  if (itemName === "TAB_CREATE" || itemName === "TAB_ADD") {
+    const amount = Number(tabAmountField.value);
+
+    if (!amount || amount <= 0) {
+      alert("Enter a valid tab amount.");
+      return;
+    }
+
+    qty = 1;
+    price = amount;
+  }
+
+  const lineTotal = price * qty;
+
+  cart.push({
+    name: itemName,
+    qty: qty,
+    price: lineTotal
+  });
+
+  total += lineTotal;
+
+  console.log("Cart now:", cart);
+
+  renderCart();
+}
+
+// =====================================================
+// 🏦 SUBMIT ORDER
+// =====================================================
+function submitOrder() {
   if (cart.length === 0) {
     alert("Cart is empty.");
     return;
   }
 
+  const employee = document.getElementById("employee").value;
+  const buyer = document.getElementById("buyer").value;
   const payment = document.getElementById("payment").value;
-  const paymentTab = document.getElementById("tabSelect")?.value || "";
+  const tabName = document.getElementById("tabSelect").value;
 
   const payload = {
-    action: "submitOrder",
-    paymentMethod: payment,
-    chargeTab: payment === "Tab" ? paymentTab : "",
+    employee,
+    buyer,
+    payment,
+    tabName,
     cart,
-    total
+    total,
+    timestamp: new Date().toISOString()
   };
 
-  try {
-    const resp = await fetch(WEBHOOK, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+  document.getElementById("formData").value = JSON.stringify(payload);
+  document.getElementById("orderForm").submit();
 
-    const text = await resp.text();
-    console.log("Server response:", text);
+  alert("Order submitted.");
 
-    alert("Order submitted.");
-
-    // reset
-    cart = [];
-    total = 0;
-    renderCart();
-
-  } catch (err) {
-    console.error(err);
-    alert("Failed to submit order.");
-  }
+  // reset
+  cart = [];
+  total = 0;
+  renderCart();
 }
 
 // =====================================================
