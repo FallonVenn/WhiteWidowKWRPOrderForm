@@ -7,6 +7,77 @@ let total = 0;
 
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbzeLu0a62QSi7bvM2Ir_rTlgeRR-tQI3PN9vgftC_g8Tbeu0ZZvgEjvlXF8I09uXXig/exec";
 
+function populateItems() {
+  const category = document.getElementById("category").value;
+  const itemSelect = document.getElementById("item");
+
+  itemSelect.innerHTML = '<option value="">Select item</option>';
+
+  if (!ITEM_DB[category]) return;
+
+  ITEM_DB[category].forEach(entry => {
+    const option = document.createElement("option");
+
+    // Tab actions have custom label
+    if (category === "TAB") {
+      option.value = entry[0];
+      option.dataset.price = entry[1];
+      option.textContent = entry[2];
+    } else {
+      option.value = entry[0];
+      option.dataset.price = entry[1];
+      option.textContent = `${entry[0]} - $${entry[1]} per`;
+    }
+
+    itemSelect.appendChild(option);
+  });
+
+  // reset tab UI when category changes
+  toggleTabPaymentItem();
+}
+
+
+/* ===============================
+   ITEM DATABASE
+================================ */
+
+const ITEM_DB = {
+  BAGS: [
+    ["Skunk Bag", 1500],
+    ["OG Kush Bag", 1500],
+    ["White Widow Bag", 1500],
+    ["AK-47 Bag", 1500],
+    ["Amnesia Bag", 1500],
+    ["Purple Haze Bag", 1500],
+    ["Gelato Bag", 1500],
+    ["Zkittles Bag", 1500]
+  ],
+
+  JOINTS: [
+    ["Skunk Joint", 1800],
+    ["OG Kush Joint", 1800],
+    ["White Widow Joint", 1800],
+    ["AK-47 Joint", 1800],
+    ["Amnesia Joint", 1800],
+    ["Purple Haze Joint", 1800],
+    ["Gelato Joint", 1800],
+    ["Zkittles Joint", 1800]
+  ],
+
+  EDIBLES: [
+    ["Raspberry Gummy Bears", 2000],
+    ["Strawberry Gummy Bears", 2000],
+    ["AK-47 Cookies", 2000],
+    ["Skunk Cookies", 2000],
+    ["White Widow Cookies", 2000]
+  ],
+
+  TAB: [
+    ["TAB_CREATE", 0, "Create New Tab (Deposit)"],
+    ["TAB_ADD", 0, "Add Funds to Existing Tab"]
+  ]
+};
+
 
 /* ===============================
    TOGGLE TAB PAYMENT INPUT
@@ -101,6 +172,11 @@ function addItem() {
   const itemSelect = document.getElementById("item");
   const qty = Number(document.getElementById("qty").value);
   const itemValue = itemSelect.value;
+   if (!itemValue) {
+  alert("Select an item first.");
+  return;
+}
+
   const itemText = itemSelect.selectedOptions[0].text;
 
   let price = Number(itemSelect.selectedOptions[0].dataset.price);
@@ -108,7 +184,10 @@ function addItem() {
   let name = itemText;
 
   // TAB PAYMENT CASE
-  if (itemValue === "TAB_PAYMENT") {
+const isTabAction = itemValue === "TAB_CREATE" || itemValue === "TAB_ADD";
+
+if (isTabAction)
+ {
     const amount = Number(document.getElementById("tabPaymentAmount").value);
     if (!amount || amount <= 0) {
       alert("Enter amount to add to tab.");
@@ -129,10 +208,10 @@ function addItem() {
 
   cart.push({
     name,
-    qty: itemValue === "TAB_PAYMENT" ? 1 : qty,
+   qty: isTabAction ? 1 : qty,
     price,
     lineTotal,
-    isTabPayment: itemValue === "TAB_PAYMENT"
+isTabPayment: isTabAction
   });
 
   document.getElementById("cart").innerHTML += `<li>${name} = $${lineTotal}</li>`;
