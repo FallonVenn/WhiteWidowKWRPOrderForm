@@ -5,7 +5,7 @@ console.log("script loaded");
 let cart = [];
 let total = 0;
 
-const WEBHOOK = "https://script.google.com/macros/s/AKfycbyomas16N8a0DPeNG872aw1yXHCFyEKOw3zUzlvQ5u3l3uoAylEsA_xtKudojzwGrLV/exec";
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbzeLu0a62QSi7bvM2Ir_rTlgeRR-tQI3PN9vgftC_g8Tbeu0ZZvgEjvlXF8I09uXXig/exec";
 
 
 /* ===============================
@@ -174,23 +174,27 @@ async function submitOrder() {
   const tabCart = cart.filter(c => c.isTabPayment);
 
   // payloads
-  const itemPayload = {
-    employee: document.getElementById("employee").value,
-    buyer: document.getElementById("buyer").value,
-    paymentType: "Item Sale",
-    tabName: "",
-    cart: itemCart,
-    total: itemCart.reduce((a, b) => a + b.lineTotal, 0)
-  };
+const itemPayload = {
+  employee: document.getElementById("employee").value,
+  buyer: document.getElementById("buyer").value,
+  paymentType: "Item Sale", // routing only
+  originalPaymentMethod: document.getElementById("payment").value,
+  tabName: "",
+  cart: itemCart,
+  total: itemCart.reduce((a, b) => a + b.lineTotal, 0)
+};
 
-  const tabPayload = {
-    employee: document.getElementById("employee").value,
-    buyer: document.getElementById("buyer").value,
-    paymentType: "Tab",
-    tabName: tabNameFinal,
-    cart: tabCart,
-    total: tabCart.reduce((a, b) => a + b.lineTotal, 0)
-  };
+
+ const tabPayload = {
+  employee: document.getElementById("employee").value,
+  buyer: document.getElementById("buyer").value,
+  paymentType: "Tab",
+  originalPaymentMethod: document.getElementById("payment").value,
+  tabName: tabNameFinal,
+  cart: tabCart,
+  total: tabCart.reduce((a, b) => a + b.lineTotal, 0)
+};
+
 
   try {
     if (itemCart.length > 0) {
