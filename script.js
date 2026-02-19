@@ -414,31 +414,37 @@ function submitOrder() {
 
   console.log("Submitting payload:", payload);
 
-  // =====================================================
-  // SEND TO GOOGLE SCRIPT (IMPORTANT)
-  // =====================================================
-  fetch(WEBHOOK, {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-    .then(res => res.text())
-    .then(data => {
-      console.log("Webhook response:", data);
-      alert("Order submitted.");
+// =====================================================
+// SEND TO GOOGLE SCRIPT (CORS SAFE)
+// =====================================================
+const formData = new URLSearchParams();
+formData.append("timestamp", timestamp);
+formData.append("employee", employee);
+formData.append("buyer", buyer);
+formData.append("payment", payment);
+formData.append("tabName", tabName);
+formData.append("orderSummary", readableSummary);
+formData.append("orderJSON", orderJSON);
+formData.append("total", total);
 
-      // reset cart
-      cart = [];
-      total = 0;
-      renderCart();
-    })
-    .catch(err => {
-      console.error("Submit failed:", err);
-      alert("Submit failed. Check console.");
-    });
-}
+fetch(WEBHOOK, {
+  method: "POST",
+  body: formData
+})
+  .then(res => res.text())
+  .then(data => {
+    console.log("Webhook response:", data);
+    alert("Order submitted.");
+
+    cart = [];
+    total = 0;
+    renderCart();
+  })
+  .catch(err => {
+    console.error("Submit failed:", err);
+    alert("Submit failed. Check console.");
+  });
+
 
 // =====================================================
 // 🌍 EXPOSE FUNCTIONS TO HTML
