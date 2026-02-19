@@ -1,9 +1,9 @@
 console.log("script loaded");
 
 // =====================================================
-// 🔗 WEBHOOK
+// 🔗 WEBHOOK URL
 // =====================================================
-const WEBHOOK = "https://script.google.com/macros/s/AKfycbycB6owuQ3u7QpWcnsIP3b4Tr3TwcL5ja0HCcJXERp_SyrsHfI7C5QKl0RyYK5fwbPH/exec";
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbyPf0iyeS2A0bzLLhtP1HfINP5qiVCqnozy8AGq6L7JUbto2N4ruHRUy6r9YBEn4N0/exec";
 
 // =====================================================
 // 🗄 ITEM DATABASE
@@ -67,14 +67,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const paymentEl = document.getElementById("payment");
   if (paymentEl) paymentEl.addEventListener("change", toggleTabField);
 
-  const tabSelectEl = document.getElementById("tabSelect");
+  const tabSelectEl = document.getElementById("existingTabSelect");
   if (tabSelectEl) tabSelectEl.addEventListener("change", toggleNewTabField);
 
-  fetchTabs(); // load existing tabs from Apps Script
+  fetchTabs(); // load existing tabs dynamically
 });
 
 // =====================================================
-// 📦 POPULATE ITEMS (CATEGORY → ITEM)
+// 📦 POPULATE ITEMS
 // =====================================================
 function populateItems() {
   const categoryEl = document.getElementById("category");
@@ -90,7 +90,6 @@ function populateItems() {
     const option = document.createElement("option");
     option.value = entry[0];
     option.dataset.price = Number(entry[1]);
-
     if (category === "TAB") {
       option.textContent = entry[2];
     } else if (category === "BAGS") {
@@ -100,7 +99,6 @@ function populateItems() {
     } else if (category === "EDIBLES") {
       option.textContent = `${entry[0]} - $${entry[1]} each`;
     }
-
     itemSelect.appendChild(option);
   });
 
@@ -108,7 +106,7 @@ function populateItems() {
 }
 
 // =====================================================
-// 💳 TOGGLE TAB PAYMENT INPUT
+// 💳 TAB PAYMENTS INPUT
 // =====================================================
 function toggleTabPaymentItem() {
   const itemValue = document.getElementById("item").value;
@@ -121,14 +119,12 @@ function toggleTabPaymentItem() {
     qtyField.style.display = "none";
     qtyLabel.style.display = "none";
     qtyField.value = 1;
-
     tabAmountField.style.display = "inline-block";
     tabAmountLabel.style.display = "inline-block";
     tabAmountField.required = true;
   } else {
     qtyField.style.display = "inline-block";
     qtyLabel.style.display = "inline-block";
-
     tabAmountField.style.display = "none";
     tabAmountLabel.style.display = "none";
     tabAmountField.required = false;
@@ -137,7 +133,7 @@ function toggleTabPaymentItem() {
 }
 
 // =====================================================
-// 💳 TOGGLE TAB NAME INPUT/DROPDOWN
+// 💳 TAB NAME INPUT/DROPDOWN
 // =====================================================
 function toggleTabNameField() {
   const itemValue = document.getElementById("item").value;
@@ -149,34 +145,22 @@ function toggleTabNameField() {
   if (itemValue === "TAB_CREATE") {
     newTabBlock.style.display = "block";
     newTabInput.required = true;
-
-    if (existingTabBlock) {
-      existingTabBlock.style.display = "none";
-      existingTabSelect.value = "";
-      existingTabSelect.required = false;
-    }
+    existingTabBlock.style.display = "none";
+    existingTabSelect.value = "";
+    existingTabSelect.required = false;
   } else if (itemValue === "TAB_ADD") {
-    if (newTabBlock) {
-      newTabBlock.style.display = "none";
-      newTabInput.value = "";
-      newTabInput.required = false;
-    }
-
-    if (existingTabBlock) {
-      existingTabBlock.style.display = "block";
-      existingTabSelect.required = true;
-    }
+    newTabBlock.style.display = "none";
+    newTabInput.value = "";
+    newTabInput.required = false;
+    existingTabBlock.style.display = "block";
+    existingTabSelect.required = true;
   } else {
-    if (newTabBlock) {
-      newTabBlock.style.display = "none";
-      newTabInput.value = "";
-      newTabInput.required = false;
-    }
-    if (existingTabBlock) {
-      existingTabBlock.style.display = "none";
-      existingTabSelect.value = "";
-      existingTabSelect.required = false;
-    }
+    newTabBlock.style.display = "none";
+    newTabInput.value = "";
+    newTabInput.required = false;
+    existingTabBlock.style.display = "none";
+    existingTabSelect.value = "";
+    existingTabSelect.required = false;
   }
 }
 
@@ -187,7 +171,7 @@ function toggleTabField() {
   const payment = document.getElementById("payment").value;
   const tabBlock = document.getElementById("tabBlock");
   const newTabBlock = document.getElementById("newTabBlock");
-  const tabSelect = document.getElementById("tabSelect");
+  const tabSelect = document.getElementById("existingTabSelect");
   const newTabField = document.getElementById("newTabName");
 
   if (payment === "Tab") {
@@ -203,7 +187,7 @@ function toggleTabField() {
 }
 
 function toggleNewTabField() {
-  const tabSelect = document.getElementById("tabSelect").value;
+  const tabSelect = document.getElementById("existingTabSelect").value;
   const newTabBlock = document.getElementById("newTabBlock");
   const newTabField = document.getElementById("newTabName");
 
@@ -223,10 +207,7 @@ function toggleNewTabField() {
 function addItem() {
   const employee = document.getElementById("employee").value;
   const buyer = document.getElementById("buyer").value;
-  if (!employee || !buyer) {
-    alert("Enter employee and buyer.");
-    return;
-  }
+  if (!employee || !buyer) return alert("Enter employee and buyer.");
 
   const itemSelect = document.getElementById("item");
   const itemValue = itemSelect.value;
@@ -244,7 +225,6 @@ function addItem() {
     price = lineTotal = amount;
     name = groupName;
     isTabPayment = true;
-
   } else if (itemValue === "TAB_ADD") {
     const amount = Number(document.getElementById("tabPaymentAmount").value);
     const groupName = document.getElementById("existingTabSelect").value;
@@ -252,7 +232,6 @@ function addItem() {
     price = lineTotal = amount;
     name = groupName;
     isTabPayment = true;
-
   } else {
     if (qty <= 0) return alert("Quantity must be at least 1.");
     lineTotal = price * qty;
@@ -266,23 +245,25 @@ function addItem() {
     price,
     lineTotal,
     isTabPayment,
-    tabAction: itemValue === "TAB_CREATE" ? "New Tab Deposit" :
-               itemValue === "TAB_ADD" ? "Add Funds to Tab" : ""
+    tabAction: itemValue === "TAB_CREATE" ? "New Tab Deposit" : itemValue === "TAB_ADD" ? "Add Funds to Tab" : ""
   });
 
   document.getElementById("cart").innerHTML += `<li>${name} = $${lineTotal}</li>`;
   document.getElementById("total").textContent = total;
 
   if (isTabPayment) document.getElementById("tabPaymentAmount").value = "";
+
+  // After creating new tab, refresh the dropdown
+  if (itemValue === "TAB_CREATE") fetchTabs();
 }
 
 // =====================================================
-// 🏦 SUBMIT ORDER (unchanged)
+// 🏦 SUBMIT ORDER
 // =====================================================
 async function submitOrder() {
-  if (cart.length === 0) return alert("Cart is empty!");
+  if (!cart.length) return alert("Cart is empty!");
 
-  const tabChoice = document.getElementById("tabSelect")?.value;
+  const tabChoice = document.getElementById("existingTabSelect")?.value;
   const tabNameFinal = tabChoice === "NEW"
     ? document.getElementById("newTabName").value.trim()
     : tabChoice || (cart.find(c => c.isTabPayment)?.name || "");
@@ -320,10 +301,13 @@ async function submitOrder() {
   total = 0;
   document.getElementById("cart").innerHTML = "";
   document.getElementById("total").textContent = "0";
+
+  // Refresh tabs after submission
+  fetchTabs();
 }
 
 // =====================================================
-// 🌐 FETCH EXISTING TABS FOR DROPDOWN
+// 🌐 FETCH EXISTING TABS
 // =====================================================
 async function fetchTabs() {
   try {
