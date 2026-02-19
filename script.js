@@ -84,32 +84,33 @@ function populateItems() {
 // 🔄 TOGGLE TAB AMOUNT UI
 // =====================================================
 function toggleTabPaymentItem() {
-  const itemEl = document.getElementById("item");
+  const itemValue = document.getElementById("item").value;
+
   const qtyField = document.getElementById("qty");
   const qtyLabel = document.getElementById("qtyLabel");
   const tabAmountField = document.getElementById("tabPaymentAmount");
   const tabAmountLabel = document.getElementById("tabAmountLabel");
 
-  if (!itemEl) return;
-
-  const itemValue = itemEl.value;
-  const isTabAction =
-    itemValue === "TAB_CREATE" ||
-    itemValue === "TAB_ADD";
-
-  if (isTabAction) {
+  // 🔥 Updated condition for new TAB options
+  if (itemValue === "TAB_CREATE" || itemValue === "TAB_ADD") {
+    // hide qty
     qtyField.style.display = "none";
     qtyLabel.style.display = "none";
     qtyField.value = 1;
 
+    // show tab amount
     tabAmountField.style.display = "inline-block";
     tabAmountLabel.style.display = "inline-block";
+    tabAmountField.required = true;
   } else {
+    // show qty
     qtyField.style.display = "inline-block";
     qtyLabel.style.display = "inline-block";
 
+    // hide tab amount
     tabAmountField.style.display = "none";
     tabAmountLabel.style.display = "none";
+    tabAmountField.required = false;
     tabAmountField.value = "";
   }
 }
