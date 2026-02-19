@@ -217,68 +217,81 @@ function toggleTabField() {
 }
 
 // =====================================================
-// 🧾 ADD ITEM TO CART (REAL VERSION)
+// 🧾 ADD ITEM TO CART (SINGLE CLEAN VERSION)
 // =====================================================
 function addItem() {
-  const category = document.getElementById("category").value;
-  const itemEl = document.getElementById("item");
-  const itemName = itemEl.value;
-  const price = Number(itemEl.selectedOptions[0]?.dataset.price || 0);
-
-  const qty = Number(document.getElementById("qty")?.value || 1);
-  const tabAmount = Number(document.getElementById("tabPaymentAmount")?.value || 0);
+  const itemSelect = document.getElementById("item");
+  const qtyField = document.getElementById("qty");
+  const tabAmountField = document.getElementById("tabPaymentAmount");
   const newTabName = document.getElementById("newTabName")?.value || "";
   const existingTab = document.getElementById("existingTabSelect")?.value || "";
 
-  if (!itemName) {
+  if (!itemSelect.value) {
     alert("Select an item first.");
     return;
   }
+
+  const itemName = itemSelect.value;
+  const pricePerUnit = Number(itemSelect.selectedOptions[0]?.dataset.price || 0);
+
+  let qty = Number(qtyField?.value || 1);
+  let lineTotal = 0;
+  let tabAction = "";
 
   // =============================
   // TAB CREATE
   // =============================
   if (itemName === "TAB_CREATE") {
+    const amount = Number(tabAmountField?.value);
+
     if (!newTabName) {
       alert("Enter new tab name.");
       return;
     }
 
-    if (!tabAmount || tabAmount <= 0) {
-      alert("Enter deposit amount.");
+    if (!amount || amount <= 0) {
+      alert("Enter valid deposit amount.");
       return;
     }
 
-    cart.push({
-      type: "TAB_CREATE",
-      name: newTabName,
-      amount: tabAmount
-    });
+    qty = 1;
+    lineTotal = amount;
+    tabAction = "CREATE";
 
-    total += tabAmount;
+    cart.push({
+      name: newTabName,
+      qty,
+      lineTotal,
+      tabAction
+    });
   }
 
   // =============================
   // TAB ADD
   // =============================
   else if (itemName === "TAB_ADD") {
+    const amount = Number(tabAmountField?.value);
+
     if (!existingTab) {
       alert("Select existing tab.");
       return;
     }
 
-    if (!tabAmount || tabAmount <= 0) {
-      alert("Enter amount.");
+    if (!amount || amount <= 0) {
+      alert("Enter valid amount.");
       return;
     }
 
-    cart.push({
-      type: "TAB_ADD",
-      name: existingTab,
-      amount: tabAmount
-    });
+    qty = 1;
+    lineTotal = amount;
+    tabAction = "ADD";
 
-    total += tabAmount;
+    cart.push({
+      name: existingTab,
+      qty,
+      lineTotal,
+      tabAction
+    });
   }
 
   // =============================
@@ -290,95 +303,42 @@ function addItem() {
       return;
     }
 
-    const lineTotal = price * qty;
+    lineTotal = pricePerUnit * qty;
 
     cart.push({
-      type: "ITEM",
       name: itemName,
-      price,
       qty,
-      lineTotal
+      lineTotal,
+      tabAction: ""
     });
-
-    total += lineTotal;
   }
 
+  total += lineTotal;
   renderCart();
 }
 
 // =====================================================
-// 🧾 RENDER CART (VISIBLE LIST)
+// 🧾 RENDER CART (FIXED)
 // =====================================================
 function renderCart() {
   const cartEl = document.getElementById("cart");
   const totalEl = document.getElementById("total");
 
-  if (!cartEl) {
-    console.error("Cart element not found (id='cart')");
-    return;
-  }
+  if (!cartEl) return;
 
   cartEl.innerHTML = "";
 
-  cart.forEach((item, index) => {
+  cart.forEach(item => {
     const li = document.createElement("li");
-    li.textContent = `${item.name} x${item.qty} - $${item.price}`;
+    li.textContent = `${item.name} x${item.qty} - $${item.lineTotal}`;
     cartEl.appendChild(li);
   });
 
-  if (totalEl) {
-    totalEl.textContent = total;
-  }
+  if (totalEl) totalEl.textContent = total;
 }
 
 // =====================================================
-// 🧾 ADD ITEM TO CART
-// =====================================================
-function addItem() {
-  const category = document.getElementById("category").value;
-  const itemSelect = document.getElementById("item");
-  const qtyField = document.getElementById("qty");
-  const tabAmountField = document.getElementById("tabPaymentAmount");
-
-  if (!itemSelect.value) {
-    alert("Select an item first.");
-    return;
-  }
-
-  const itemName = itemSelect.value;
-  let qty = Number(qtyField.value) || 1;
-  let price = Number(itemSelect.selectedOptions[0].dataset.price) || 0;
-
-  // TAB actions use dollar amount instead
-  if (itemName === "TAB_CREATE" || itemName === "TAB_ADD") {
-    const amount = Number(tabAmountField.value);
-
-    if (!amount || amount <= 0) {
-      alert("Enter a valid tab amount.");
-      return;
-    }
-
-    qty = 1;
-    price = amount;
-  }
-
-  const lineTotal = price * qty;
-
-  cart.push({
-    name: itemName,
-    qty: qty,
-    price: lineTotal
-  });
-
-  total += lineTotal;
-
-  console.log("Cart now:", cart);
-
-  renderCart();
-}
-
-// =====================================================
-// 🏦 SUBMIT ORDER
+// 🏦 SUBMIT ORDER (FIXED + COMPLETE)
 // =====================================================
 function submitOrder() {
   if (cart.length === 0) {
@@ -388,63 +348,44 @@ function submitOrder() {
 
   const employee = document.getElementById("employee")?.value || "";
   const buyer = document.getElementById("buyer")?.value || "";
-  const payment = document.getElementById("payment")?.value || "";
+  const paymentType = document.getElementById("payment")?.value || "";
   const tabName = document.getElementById("tabSelect")?.value || "";
   const timestamp = new Date().toISOString();
 
-  // ============================
-  // Build readable order summary
-  // ============================
   const readableSummary = cart
-    .map(item => `${item.name} x${item.qty} - $${item.price}`)
+    .map(i => `${i.name} x${i.qty} - $${i.lineTotal}`)
     .join(" | ");
 
   const orderJSON = JSON.stringify(cart);
 
-  const payload = {
-    timestamp: timestamp,
-    employee: employee,
-    buyer: buyer,
-    payment: payment,
-    tabName: tabName,
-    orderSummary: readableSummary,
-    orderJSON: orderJSON,
-    total: total
-  };
+  const formData = new URLSearchParams();
+  formData.append("timestamp", timestamp);
+  formData.append("employee", employee);
+  formData.append("buyer", buyer);
+  formData.append("paymentType", paymentType);
+  formData.append("tabName", tabName);
+  formData.append("orderSummary", readableSummary);
+  formData.append("orderJSON", orderJSON);
+  formData.append("total", total);
 
-  console.log("Submitting payload:", payload);
-
-// =====================================================
-// SEND TO GOOGLE SCRIPT (CORS SAFE)
-// =====================================================
-const formData = new URLSearchParams();
-formData.append("timestamp", timestamp);
-formData.append("employee", employee);
-formData.append("buyer", buyer);
-formData.append("payment", payment);
-formData.append("tabName", tabName);
-formData.append("orderSummary", readableSummary);
-formData.append("orderJSON", orderJSON);
-formData.append("total", total);
-
-fetch(WEBHOOK, {
-  method: "POST",
-  body: formData
-})
-  .then(res => res.text())
-  .then(data => {
-    console.log("Webhook response:", data);
-    alert("Order submitted.");
-
-    cart = [];
-    total = 0;
-    renderCart();
+  fetch(WEBHOOK, {
+    method: "POST",
+    body: formData
   })
-  .catch(err => {
-    console.error("Submit failed:", err);
-    alert("Submit failed. Check console.");
-  });
+    .then(res => res.text())
+    .then(data => {
+      console.log("Webhook response:", data);
+      alert("Order submitted.");
 
+      cart = [];
+      total = 0;
+      renderCart();
+    })
+    .catch(err => {
+      console.error("Submit failed:", err);
+      alert("Submit failed. Check console.");
+    });
+}
 
 // =====================================================
 // 🌍 EXPOSE FUNCTIONS TO HTML
