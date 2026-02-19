@@ -58,68 +58,49 @@ async function submitOrder() {
   }
 
   let tabNameFinal = "";
-  const paymentType = document.getElementById("payment").value;
-
-  if (paymentType === "Tab") {
+  if (document.getElementById("payment").value === "Tab") {
     const tabChoice = document.getElementById("tabSelect").value;
-    if (tabChoice === "NEW") {
-      tabNameFinal = document.getElementById("newTabName").value.trim();
-      if (!tabNameFinal) {
-        alert("Enter new tab name.");
-        return;
-      }
-    } else {
-      tabNameFinal = tabChoice;
+    tabNameFinal = tabChoice === "NEW"
+      ? document.getElementById("newTabName").value.trim()
+      : tabChoice;
+
+    if (!tabNameFinal) {
+      alert("Enter new tab name.");
+      return;
     }
   }
 
-  // Split cart into regular items and tab payments
-  const itemSales = cart.filter(item => !item.isTabPayment);
-  const tabPayments = cart.filter(item => item.isTabPayment);
+  const payload = {
+    employee: document.getElementById("employee").value,
+    buyer: document.getElementById("buyer").value,
+    paymentType: document.getElementById("payment").value,
+    tabName: tabNameFinal,
+    cart: cart,
+    total: total
+  };
 
   try {
-    // Send regular items to Sales Log
-    if (itemSales.length > 0) {
-      await fetch(WEBHOOK, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-          employee: document.getElementById("employee").value,
-          buyer: document.getElementById("buyer").value,
-          paymentType: paymentType,
-          tabName: "", // regular sales have no tab
-          cart: itemSales,
-          total: itemSales.reduce((sum, i) => sum + i.lineTotal, 0)
-        }),
-        headers: { "Content-Type": "application/json" }
-      });
+    const res = await fetch(WEBHOOK, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const text = await res.text();
+
+    if (text.startsWith("ERROR:")) {
+      alert(text); // show tab negative alert
+      return;
     }
 
-    // Send tab payments separately
-    if (tabPayments.length > 0) {
-      await fetch(WEBHOOK, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-          employee: document.getElementById("employee").value,
-          buyer: document.getElementById("buyer").value,
-          paymentType: "Tab",
-          tabName: tabNameFinal,
-          cart: tabPayments,
-          total: tabPayments.reduce((sum, i) => sum + i.lineTotal, 0)
-        }),
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    alert("Order submitted!");
+    alert("Order submitted successfully!");
     cart = [];
     total = 0;
     document.getElementById("cart").innerHTML = "";
     document.getElementById("total").textContent = "0";
 
   } catch (err) {
-    console.error("Submit failed:", err);
-    alert("Submit FAILED - check console (F12)");
+    console.error(err);
+    alert("Submit failed. Check console.");
   }
 }
