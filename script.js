@@ -1,35 +1,7 @@
-const WEBHOOK = "https://script.google.com/macros/s/AKfycbyu7uQT7Gos6IsgrJvtEX6y7D66Y8_xOokGVqys2OUqMAL6OrXzlzzYO1GbT-6iMAh0/exec";
+const WEBHOOK = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
 let cart = [];
 let total = 0;
-
-/* ===============================
-   TAB PAYMENT VISIBILITY
-================================ */
-function toggleTabPaymentItem() {
-  const itemValue = document.getElementById("item").value;
-  const qtyField = document.getElementById("qty");
-  const qtyLabel = document.getElementById("qtyLabel");
-  const tabAmountField = document.getElementById("tabPaymentAmount");
-  const tabAmountLabel = document.getElementById("tabAmountLabel");
-
-  if (itemValue === "TAB_PAYMENT") {
-    qtyField.style.display = "none";
-    qtyLabel.style.display = "none";
-    qtyField.value = 1;
-
-    tabAmountField.style.display = "inline-block";
-    tabAmountLabel.style.display = "inline-block";
-    tabAmountField.required = true;
-  } else {
-    qtyField.style.display = "inline-block";
-    qtyLabel.style.display = "inline-block";
-    tabAmountField.style.display = "none";
-    tabAmountLabel.style.display = "none";
-    tabAmountField.required = false;
-    tabAmountField.value = "";
-  }
-}
 
 /* ===============================
    ADD ITEM
@@ -73,12 +45,11 @@ function addItem() {
 
   document.getElementById("cart").innerHTML += `<li>${name} = $${lineTotal.toLocaleString()}</li>`;
   document.getElementById("total").textContent = total.toLocaleString();
-
   document.getElementById("tabPaymentAmount").value = "";
 }
 
 /* ===============================
-   SUBMIT ORDER
+   SUBMIT ORDER SPLIT
 ================================ */
 async function submitOrder() {
   if (cart.length === 0) {
@@ -87,8 +58,9 @@ async function submitOrder() {
   }
 
   let tabNameFinal = "";
+  const paymentType = document.getElementById("payment").value;
 
-  if (document.getElementById("payment").value === "Tab") {
+  if (paymentType === "Tab") {
     const tabChoice = document.getElementById("tabSelect").value;
     if (tabChoice === "NEW") {
       tabNameFinal = document.getElementById("newTabName").value.trim();
@@ -101,27 +73,46 @@ async function submitOrder() {
     }
   }
 
-  const payload = {
-    employee: document.getElementById("employee").value,
-    buyer: document.getElementById("buyer").value,
-    paymentType: document.getElementById("payment").value,
-    tabName: tabNameFinal,
-    cart: cart,
-    total: total
-  };
+  // Split cart into regular items and tab payments
+  const itemSales = cart.filter(item => !item.isTabPayment);
+  const tabPayments = cart.filter(item => item.isTabPayment);
 
   try {
-    // Use fetch in 'no-cors' mode for GitHub Pages / Netlify
-    await fetch(WEBHOOK, {
-      method: "POST",
-      mode: "no-cors",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
+    // Send regular items to Sales Log
+    if (itemSales.length > 0) {
+      await fetch(WEBHOOK, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          employee: document.getElementById("employee").value,
+          buyer: document.getElementById("buyer").value,
+          paymentType: paymentType,
+          tabName: "", // regular sales have no tab
+          cart: itemSales,
+          total: itemSales.reduce((sum, i) => sum + i.lineTotal, 0)
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Send tab payments separately
+    if (tabPayments.length > 0) {
+      await fetch(WEBHOOK, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          employee: document.getElementById("employee").value,
+          buyer: document.getElementById("buyer").value,
+          paymentType: "Tab",
+          tabName: tabNameFinal,
+          cart: tabPayments,
+          total: tabPayments.reduce((sum, i) => sum + i.lineTotal, 0)
+        }),
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
     alert("Order submitted!");
-
-    // Reset POS
     cart = [];
     total = 0;
     document.getElementById("cart").innerHTML = "";
