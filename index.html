@@ -33,13 +33,12 @@ Item:
   <option value="TAB_PAYMENT" data-price="0">Tab Payment - Custom Amount - FILL OUT SEPERATE FROM ITEMS</option>
 </select>
 
-Qty: <input id="qty" type="number" value="1" min="1">
+<span id="qtyLabel">Qty:</span>
+<input id="qty" type="number" value="1" min="1">
 
-<!-- ✅ NEW: tab payment amount box -->
-<div id="tabPaymentBlock" style="display:none;">
-  Amount to Add to Tab:
-  <input id="tabPaymentAmount" type="number" min="1" placeholder="Enter dollar amount">
-</div>
+<!-- Tab payment amount (hidden by default) -->
+<span id="tabAmountLabel" style="display:none;">Amount to Add to Tab:</span>
+<input id="tabPaymentAmount" type="number" min="1" style="display:none;" placeholder="Enter dollar amount">
 
 <button onclick="addItem()">Add to Cart</button>
 
@@ -85,18 +84,36 @@ const WEBHOOK = "https://script.google.com/macros/s/AKfycbyu7uQT7Gos6IsgrJvtEX6y
 ================================ */
 function toggleTabPaymentItem() {
   const itemValue = document.getElementById("item").value;
-  const block = document.getElementById("tabPaymentBlock");
-  const amountField = document.getElementById("tabPaymentAmount");
+
+  const qtyField = document.getElementById("qty");
+  const qtyLabel = document.getElementById("qtyLabel");
+
+  const tabAmountField = document.getElementById("tabPaymentAmount");
+  const tabAmountLabel = document.getElementById("tabAmountLabel");
 
   if (itemValue === "TAB_PAYMENT") {
-    block.style.display = "block";
-    amountField.required = true;
+    // hide qty
+    qtyField.style.display = "none";
+    qtyLabel.style.display = "none";
+    qtyField.value = 1;
+
+    // show tab amount
+    tabAmountField.style.display = "inline-block";
+    tabAmountLabel.style.display = "inline-block";
+    tabAmountField.required = true;
   } else {
-    block.style.display = "none";
-    amountField.required = false;
-    amountField.value = "";
+    // show qty
+    qtyField.style.display = "inline-block";
+    qtyLabel.style.display = "inline-block";
+
+    // hide tab amount
+    tabAmountField.style.display = "none";
+    tabAmountLabel.style.display = "none";
+    tabAmountField.required = false;
+    tabAmountField.value = "";
   }
 }
+
 
 /* ===============================
    EXISTING TAB LOGIC
