@@ -27,18 +27,30 @@ Buyer:
 <input id="buyer" placeholder="Enter buyer name" required>
 <br><br>
 
+<!-- ================= CATEGORY ================= -->
+Category:
+<select id="category" onchange="populateItems()">
+  <option value="">Select Category</option>
+  <option value="BAGS">Bags</option>
+  <option value="JOINTS">Joints</option>
+  <option value="EDIBLES">Edibles</option>
+  <option value="TAB">Tab Actions</option>
+</select>
+<br><br>
+
+<!-- ================= ITEM ================= -->
 Item:
 <select id="item" onchange="toggleTabPaymentItem()">
-  <option value="AK-47 2g Bag" data-price="1500">AK-47 2g Bag - $1500 per</option>
-  <option value="Amnesia 2g Bag" data-price="1500">Amnesia 2g Bag - $1500 per</option>
-  <option value="TAB_PAYMENT" data-price="0">Add Funds to Tab</option>
+  <option value="">Select item</option>
 </select>
 
 <span id="qtyLabel">Qty:</span>
 <input id="qty" type="number" value="1" min="1">
 
+<!-- hidden for tab payment -->
 <span id="tabAmountLabel" style="display:none;">Amount to Add to Tab:</span>
 <input id="tabPaymentAmount" type="number" min="1" style="display:none;" placeholder="Enter dollar amount">
+
 
 <button onclick="addItem()">Add to Cart</button>
 
