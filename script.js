@@ -386,30 +386,58 @@ function submitOrder() {
     return;
   }
 
-  const employee = document.getElementById("employee").value;
-  const buyer = document.getElementById("buyer").value;
-  const payment = document.getElementById("payment").value;
-  const tabName = document.getElementById("tabSelect").value;
+  const employee = document.getElementById("employee")?.value || "";
+  const buyer = document.getElementById("buyer")?.value || "";
+  const payment = document.getElementById("payment")?.value || "";
+  const tabName = document.getElementById("tabSelect")?.value || "";
+  const timestamp = new Date().toISOString();
+
+  // ============================
+  // Build readable order summary
+  // ============================
+  const readableSummary = cart
+    .map(item => `${item.name} x${item.qty} - $${item.price}`)
+    .join(" | ");
+
+  const orderJSON = JSON.stringify(cart);
 
   const payload = {
-    employee,
-    buyer,
-    payment,
-    tabName,
-    cart,
-    total,
-    timestamp: new Date().toISOString()
+    timestamp: timestamp,
+    employee: employee,
+    buyer: buyer,
+    payment: payment,
+    tabName: tabName,
+    orderSummary: readableSummary,
+    orderJSON: orderJSON,
+    total: total
   };
 
-  document.getElementById("formData").value = JSON.stringify(payload);
-  document.getElementById("orderForm").submit();
+  console.log("Submitting payload:", payload);
 
-  alert("Order submitted.");
+  // =====================================================
+  // SEND TO GOOGLE SCRIPT (IMPORTANT)
+  // =====================================================
+  fetch(WEBHOOK, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+    .then(res => res.text())
+    .then(data => {
+      console.log("Webhook response:", data);
+      alert("Order submitted.");
 
-  // reset
-  cart = [];
-  total = 0;
-  renderCart();
+      // reset cart
+      cart = [];
+      total = 0;
+      renderCart();
+    })
+    .catch(err => {
+      console.error("Submit failed:", err);
+      alert("Submit failed. Check console.");
+    });
 }
 
 // =====================================================
