@@ -1,6 +1,11 @@
 console.log("script loaded");
 
 // =====================================================
+// 🔗 WEBHOOK
+// =====================================================
+const WEBHOOK = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // <-- replace with your Apps Script URL
+
+// =====================================================
 // 🗄 ITEM DATABASE
 // =====================================================
 const ITEM_DB = {
@@ -63,12 +68,16 @@ function populateItems() {
   ITEM_DB[category].forEach(entry => {
     const option = document.createElement("option");
     option.value = entry[0];
-    option.dataset.price = Number(entry[1]); // ensure numeric
+    option.dataset.price = Number(entry[1]);
 
     if (category === "TAB") {
-      option.textContent = entry[2]; // custom label
-    } else {
-      option.textContent = `${entry[0]} - $${entry[1]} per`;
+      option.textContent = entry[2];
+    } else if (category === "BAGS") {
+      option.textContent = `${entry[0]} - $${entry[1]} per bag`;
+    } else if (category === "JOINTS") {
+      option.textContent = `${entry[0]} - $${entry[1]} per joint`;
+    } else if (category === "EDIBLES") {
+      option.textContent = `${entry[0]} - $${entry[1]} each`;
     }
 
     itemSelect.appendChild(option);
@@ -88,7 +97,6 @@ function toggleTabPaymentItem() {
   const tabAmountLabel = document.getElementById("tabAmountLabel");
 
   if (itemValue === "TAB_CREATE" || itemValue === "TAB_ADD") {
-    // hide qty, show amount to add
     qtyField.style.display = "none";
     qtyLabel.style.display = "none";
     qtyField.value = 1;
@@ -97,7 +105,6 @@ function toggleTabPaymentItem() {
     tabAmountLabel.style.display = "inline-block";
     tabAmountField.required = true;
   } else {
-    // show qty, hide amount
     qtyField.style.display = "inline-block";
     qtyLabel.style.display = "inline-block";
 
@@ -105,6 +112,43 @@ function toggleTabPaymentItem() {
     tabAmountLabel.style.display = "none";
     tabAmountField.required = false;
     tabAmountField.value = "";
+  }
+}
+
+// =====================================================
+// 💳 TOGGLE PAYMENT TAB FIELDS
+// =====================================================
+function toggleTabField() {
+  const payment = document.getElementById("payment").value;
+  const tabBlock = document.getElementById("tabBlock");
+  const newTabBlock = document.getElementById("newTabBlock");
+  const tabSelect = document.getElementById("tabSelect");
+  const newTabField = document.getElementById("newTabName");
+
+  if (payment === "Tab") {
+    tabBlock.style.display = "block";
+    tabSelect.required = true;
+  } else {
+    tabBlock.style.display = "none";
+    newTabBlock.style.display = "none";
+    tabSelect.required = false;
+    tabSelect.value = "";
+    newTabField.value = "";
+  }
+}
+
+function toggleNewTabField() {
+  const tabSelect = document.getElementById("tabSelect").value;
+  const newTabBlock = document.getElementById("newTabBlock");
+  const newTabField = document.getElementById("newTabName");
+
+  if (tabSelect === "NEW") {
+    newTabBlock.style.display = "block";
+    newTabField.required = true;
+  } else {
+    newTabBlock.style.display = "none";
+    newTabField.required = false;
+    newTabField.value = "";
   }
 }
 
@@ -125,7 +169,6 @@ function addItem() {
   }
 
   const itemSelect = document.getElementById("item");
-  const category = document.getElementById("category").value;
   const itemValue = itemSelect.value;
   const itemText = itemSelect.selectedOptions[0].text;
   const qty = Number(document.getElementById("qty").value);
@@ -200,15 +243,13 @@ async function submitOrder() {
     if (tabItem) tabNameFinal = tabItem.name;
   }
 
-  // split cart
   const itemCart = cart.filter(c => !c.isTabPayment);
   const tabCart = cart.filter(c => c.isTabPayment);
 
-  // payloads
   const itemPayload = {
     employee: document.getElementById("employee").value,
     buyer: document.getElementById("buyer").value,
-    paymentType: "Item Sale", // routing only
+    paymentType: "Item Sale",
     originalPaymentMethod: document.getElementById("payment").value || "Cash",
     tabName: "",
     cart: itemCart,
