@@ -236,13 +236,21 @@ async function submitOrder() {
     total: total
   };
 
-  await fetch(WEBHOOK, {
+  try {
+  const res = await fetch(WEBHOOK, {
     method: "POST",
     body: JSON.stringify(payload),
     headers: { "Content-Type": "application/json" }
   });
 
+  const text = await res.text();
+  console.log("Server response:", text);
+
   alert("Order submitted!");
+} catch (err) {
+  console.error("Submit failed:", err);
+  alert("Submit FAILED - check console (F12)");
+}
 
   cart = [];
   total = 0;
