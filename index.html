@@ -24,19 +24,17 @@ Buyer:
 <br><br>
 
 Item:
-<!-- ✅ added onchange -->
 <select id="item" onchange="toggleTabPaymentItem()">
   <option value="White Widow 2g Bag" data-price="1500">White Widow 2g Bag - $1500 per</option>
   <option value="White Widow Joint" data-price="1800">White Widow Joint - $1800 per</option>
   <option value="Strawberry Gummy Bears" data-price="2000">Strawberry Gummy Bears - $2000 per</option>
   <option value="AK-47 Cookies" data-price="2000">AK-47 Cookies - $2000 per</option>
-  <option value="TAB_PAYMENT" data-price="0">Tab Payment - Custom Amount - FILL OUT SEPERATE FROM ITEMS</option>
+  <option value="TAB_PAYMENT" data-price="0">Tab Payment - Custom Amount</option>
 </select>
 
 <span id="qtyLabel">Qty:</span>
 <input id="qty" type="number" value="1" min="1">
 
-<!-- Tab payment amount (hidden by default) -->
 <span id="tabAmountLabel" style="display:none;">Amount to Add to Tab:</span>
 <input id="tabPaymentAmount" type="number" min="1" style="display:none;" placeholder="Enter dollar amount">
 
@@ -69,41 +67,40 @@ Payment:
 </div>
 <br>
 
+<!-- Hidden form for Apps Script submission -->
+<form id="orderForm" action="YOUR_WEBHOOK_URL" method="post" target="hiddenIframe">
+  <input type="hidden" name="data" id="formData">
+</form>
+<iframe name="hiddenIframe" style="display:none;"></iframe>
+
 <button type="button" onclick="submitOrder()">Submit Order</button>
 
 <script>
 let cart = [];
 let total = 0;
-const WEBHOOK = "https://script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec";
 
 /* ===============================
    TAB PAYMENT VISIBILITY
 ================================ */
 function toggleTabPaymentItem() {
   const itemValue = document.getElementById("item").value;
-
   const qtyField = document.getElementById("qty");
   const qtyLabel = document.getElementById("qtyLabel");
-
   const tabAmountField = document.getElementById("tabPaymentAmount");
   const tabAmountLabel = document.getElementById("tabAmountLabel");
 
   if (itemValue === "TAB_PAYMENT") {
-    // hide qty
     qtyField.style.display = "none";
     qtyLabel.style.display = "none";
     qtyField.value = 1;
 
-    // show tab amount
     tabAmountField.style.display = "inline-block";
     tabAmountLabel.style.display = "inline-block";
     tabAmountField.required = true;
   } else {
-    // show qty
     qtyField.style.display = "inline-block";
     qtyLabel.style.display = "inline-block";
 
-    // hide tab amount
     tabAmountField.style.display = "none";
     tabAmountLabel.style.display = "none";
     tabAmountField.required = false;
@@ -111,9 +108,8 @@ function toggleTabPaymentItem() {
   }
 }
 
-
 /* ===============================
-   EXISTING TAB LOGIC
+   TAB SELECTION LOGIC
 ================================ */
 function toggleTabField() {
   const payment = document.getElementById("payment").value;
@@ -150,7 +146,7 @@ function toggleNewTabField() {
 }
 
 /* ===============================
-   ADD ITEM (UPDATED)
+   ADD ITEM
 ================================ */
 function addItem() {
   const itemSelect = document.getElementById("item");
@@ -162,24 +158,14 @@ function addItem() {
   let lineTotal = 0;
   let name = itemText;
 
-  // 🔥 TAB PAYMENT SPECIAL CASE
   if (itemValue === "TAB_PAYMENT") {
     const amount = Number(document.getElementById("tabPaymentAmount").value);
-
-    if (!amount || amount <= 0) {
-      alert("Enter amount to add to tab.");
-      return;
-    }
-
+    if (!amount || amount <= 0) { alert("Enter amount to add to tab."); return; }
     price = amount;
     lineTotal = amount;
     name = "Tab Payment";
   } else {
-    if (qty <= 0) {
-      alert("Quantity must be at least 1.");
-      return;
-    }
-
+    if (qty <= 0) { alert("Quantity must be at least 1."); return; }
     lineTotal = price * qty;
   }
 
@@ -195,33 +181,26 @@ function addItem() {
 
   document.getElementById("cart").innerHTML +=
     `<li>${name} = $${lineTotal}</li>`;
-
   document.getElementById("total").textContent = total;
 
   document.getElementById("tabPaymentAmount").value = "";
 }
 
 /* ===============================
-   SUBMIT ORDER
+   SUBMIT ORDER (FORM METHOD)
 ================================ */
-async function submitOrder() {
+function submitOrder() {
   if (cart.length === 0) {
     alert("Cart is empty!");
     return;
   }
 
   let tabNameFinal = "";
-
   if (document.getElementById("payment").value === "Tab") {
     const tabChoice = document.getElementById("tabSelect").value;
-
     if (tabChoice === "NEW") {
       tabNameFinal = document.getElementById("newTabName").value.trim();
-
-      if (!tabNameFinal) {
-        alert("Enter new tab name.");
-        return;
-      }
+      if (!tabNameFinal) { alert("Enter new tab name."); return; }
     } else {
       tabNameFinal = tabChoice;
     }
@@ -236,22 +215,13 @@ async function submitOrder() {
     total: total
   };
 
-try {
-  const formData = new FormData();
-  formData.append("data", JSON.stringify(payload));
+  // ✅ Submit via hidden form (works with Apps Script, avoids CORS)
+  document.getElementById("formData").value = JSON.stringify(payload);
+  document.getElementById("orderForm").submit();
 
-  await fetch(WEBHOOK, {
-    method: "POST",
-    mode: "no-cors",  // required for Netlify
-    body: formData
-  });
+  alert("Order submitted!");
 
-  alert("Order submitted successfully!!");
-} catch (err) {
-  console.error("Submit failed:", err);
-  alert("Submit FAILED - check console (F12)");
-}
-
+  // reset POS
   cart = [];
   total = 0;
   document.getElementById("cart").innerHTML = "";
