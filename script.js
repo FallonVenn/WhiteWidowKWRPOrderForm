@@ -7,30 +7,30 @@ let total = 0;
 
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbzeLu0a62QSi7bvM2Ir_rTlgeRR-tQI3PN9vgftC_g8Tbeu0ZZvgEjvlXF8I09uXXig/exec";
 
-function populateItems() {
-  const category = document.getElementById("category").value;
+function toggleTabPaymentItem() {
   const itemSelect = document.getElementById("item");
+  if (!itemSelect) return;
 
-  itemSelect.innerHTML = '<option value="">Select item</option>';
+  const selectedValue = itemSelect.value;
 
-  if (!ITEM_DB[category]) return;
+  const qtyLabel = document.getElementById("qtyLabel");
+  const qtyInput = document.getElementById("qty");
 
-  ITEM_DB[category].forEach(entry => {
-    const option = document.createElement("option");
+  if (!qtyLabel || !qtyInput) return;
 
-    // Tab actions have custom label
-    if (category === "TAB") {
-      option.value = entry[0];
-      option.dataset.price = entry[1];
-      option.textContent = entry[2];
-    } else {
-      option.value = entry[0];
-      option.dataset.price = entry[1];
-      option.textContent = `${entry[0]} - $${entry[1]} per`;
-    }
+  // 🔥 DEBUG (you can remove later)
+  console.log("Selected item:", selectedValue);
 
-    itemSelect.appendChild(option);
-  });
+  if (selectedValue === "TAB_CREATE" || selectedValue === "TAB_ADD") {
+    qtyLabel.textContent = "Amount To Add:";
+    qtyInput.placeholder = "Enter dollar amount";
+    qtyInput.value = ""; // optional but helpful
+  } else {
+    qtyLabel.textContent = "Quantity:";
+    qtyInput.placeholder = "Enter quantity";
+    qtyInput.value = "1";
+  }
+}
 
   // reset tab UI when category changes
   toggleTabPaymentItem();
