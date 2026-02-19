@@ -46,10 +46,11 @@ Qty: <input id="qty" type="number" value="1" min="1">
 Payment:
 <select id="payment" name="paymentType" required onchange="toggleTabField()">
   <option value="" disabled selected>Select Payment</option>
-  <option>Cash</option>
-  <option>Card</option>
-  <option>Tab</option>
+  <option value="Cash">Cash</option>
+  <option value="Card">Card</option>
+  <option value="Tab">Tab</option>
 </select>
+
 
 <div id="tabBlock" style="display:none;">
   Tab:
