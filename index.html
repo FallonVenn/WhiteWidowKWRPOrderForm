@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FiveM Business POS</title>
+  <title>KWRP White Widow POS</title>
 </head>
 <body>
 
@@ -51,18 +51,22 @@ Payment:
   <option>Tab</option>
 </select>
 
-Tab:
-<select id="tabSelect" name="tabSelect" style="display:none;" onchange="toggleNewTabField()">
-  <option value="">Select Tab</option>
-  <option value="NEW">New Tab</option>
-  <option>PD</option>
-  <option>EMS</option>
-  <option>Vagos</option>
-</select>
+<div id="tabBlock" style="display:none;">
+  Tab:
+  <select id="tabSelect" name="tabSelect" onchange="toggleNewTabField()">
+    <option value="">Select Tab</option>
+    <option value="NEW">New Tab</option>
+    <option>PD</option>
+    <option>EMS</option>
+    <option>Vagos</option>
+  </select>
+</div>
 
-New Tab Name:
-<input id="newTabName" placeholder="Enter new tab name" style="display:none;">
-<br><br>
+<div id="newTabBlock" style="display:none;">
+  New Tab Name:
+  <input id="newTabName" placeholder="Enter new tab name">
+</div>
+<br>
 
 
 <button type="button" onclick="submitOrder()">Submit Order</button>
@@ -74,36 +78,38 @@ const WEBHOOK = "https://script.google.com/macros/s/AKfycbyu7uQT7Gos6IsgrJvtEX6y
 
 function toggleTabField() {
   const payment = document.getElementById("payment").value;
+  const tabBlock = document.getElementById("tabBlock");
+  const newTabBlock = document.getElementById("newTabBlock");
   const tabSelect = document.getElementById("tabSelect");
   const newTabField = document.getElementById("newTabName");
 
   if (payment === "Tab") {
-    tabSelect.style.display = "inline-block";
+    tabBlock.style.display = "block";
     tabSelect.required = true;
   } else {
-    tabSelect.style.display = "none";
+    tabBlock.style.display = "none";
+    newTabBlock.style.display = "none";
     tabSelect.required = false;
     tabSelect.value = "";
-    newTabField.style.display = "none";
-    newTabField.required = false;
     newTabField.value = "";
   }
 }
 
 function toggleNewTabField() {
   const tabSelect = document.getElementById("tabSelect").value;
+  const newTabBlock = document.getElementById("newTabBlock");
   const newTabField = document.getElementById("newTabName");
 
   if (tabSelect === "NEW") {
-    newTabField.style.display = "inline-block";
+    newTabBlock.style.display = "block";
     newTabField.required = true;
   } else {
-    newTabField.style.display = "none";
+    newTabBlock.style.display = "none";
     newTabField.required = false;
     newTabField.value = "";
   }
 }
-  
+
 function addItem() {
   const itemSelect = document.getElementById("item");
   const qty = Number(document.getElementById("qty").value);
