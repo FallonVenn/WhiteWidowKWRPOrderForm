@@ -238,13 +238,12 @@ async function submitOrder() {
 
  try {
   await fetch(WEBHOOK, {
-    method: "POST",
-    mode: "no-cors", // ⭐ REQUIRED FOR APPS SCRIPT
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    }
-  });
+  method: "POST",
+  mode: "no-cors", // still required from Netlify
+  body: JSON.stringify(payload),
+  headers: { "Content-Type": "application/json" } // send as JSON
+});
+
 
   alert("Order submitted!");
 } catch (err) {
