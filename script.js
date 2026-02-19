@@ -388,6 +388,63 @@ function submitOrder() {
 }
 
 // =====================================================
+// 🔄 RESET ORDER ENTRY (PARTIAL - after Add to Cart)
+// =====================================================
+function resetOrderEntryPartial() {
+  // Category
+  const category = document.getElementById("category");
+  if (category) category.value = "";
+
+  // Item dropdown
+  const item = document.getElementById("item");
+  if (item) item.innerHTML = '<option value="">Select item</option>';
+
+  // Quantity
+  const qty = document.getElementById("qty");
+  if (qty) qty.value = 1;
+
+  // Tab amount
+  const tabAmount = document.getElementById("tabPaymentAmount");
+  if (tabAmount) tabAmount.value = "";
+
+  // Tab name fields
+  const newTabName = document.getElementById("newTabName");
+  if (newTabName) newTabName.value = "";
+
+  const existingTab = document.getElementById("existingTabSelect");
+  if (existingTab) existingTab.value = "";
+
+  // Hide tab UI
+  toggleTabPaymentItem();
+  toggleTabNameField();
+}
+
+// =====================================================
+// 🔄 RESET ORDER ENTRY (FULL - after Submit)
+// =====================================================
+function resetOrderEntryFull() {
+  resetOrderEntryPartial();
+
+  // Employee
+  const employee = document.getElementById("employee");
+  if (employee) employee.value = "";
+
+  // Buyer
+  const buyer = document.getElementById("buyer");
+  if (buyer) buyer.value = "";
+
+  // Payment
+  const payment = document.getElementById("payment");
+  if (payment) payment.selectedIndex = 0;
+
+  // Payment tab dropdown
+  const tabSelect = document.getElementById("tabSelect");
+  if (tabSelect) tabSelect.value = "";
+
+  toggleTabField();
+}
+
+// =====================================================
 // 🌍 EXPOSE FUNCTIONS TO HTML
 // =====================================================
 window.addItem = addItem;
