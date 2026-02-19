@@ -236,21 +236,21 @@ async function submitOrder() {
     total: total
   };
 
- try {
+try {
+  const formData = new FormData();
+  formData.append("data", JSON.stringify(payload));
+
   await fetch(WEBHOOK, {
-  method: "POST",
-  mode: "no-cors", // still required from Netlify
-  body: JSON.stringify(payload),
-  headers: { "Content-Type": "application/json" } // send as JSON
-});
+    method: "POST",
+    mode: "no-cors",  // required for Netlify
+    body: formData
+  });
 
-
-  alert("Order submitted!");
+  alert("Order submitted successfully!!");
 } catch (err) {
   console.error("Submit failed:", err);
   alert("Submit FAILED - check console (F12)");
 }
-
 
   cart = [];
   total = 0;
