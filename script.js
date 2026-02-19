@@ -1,10 +1,83 @@
-const WEBHOOK = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
-
+/* ===============================
+   GLOBAL VARIABLES
+================================ */
 let cart = [];
 let total = 0;
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbyu7uQT7Gos6IsgrJvtEX6y7D66Y8_xOokGVqys2OUqMAL6OrXzlzzYO1GbT-6iMAh0/exec";
 
 /* ===============================
-   ADD ITEM
+   TOGGLE TAB PAYMENT INPUT
+================================ */
+function toggleTabPaymentItem() {
+  const itemValue = document.getElementById("item").value;
+
+  const qtyField = document.getElementById("qty");
+  const qtyLabel = document.getElementById("qtyLabel");
+  const tabAmountField = document.getElementById("tabPaymentAmount");
+  const tabAmountLabel = document.getElementById("tabAmountLabel");
+
+  if (itemValue === "TAB_PAYMENT") {
+    // hide qty
+    qtyField.style.display = "none";
+    qtyLabel.style.display = "none";
+    qtyField.value = 1;
+
+    // show tab amount
+    tabAmountField.style.display = "inline-block";
+    tabAmountLabel.style.display = "inline-block";
+    tabAmountField.required = true;
+  } else {
+    // show qty
+    qtyField.style.display = "inline-block";
+    qtyLabel.style.display = "inline-block";
+
+    // hide tab amount
+    tabAmountField.style.display = "none";
+    tabAmountLabel.style.display = "none";
+    tabAmountField.required = false;
+    tabAmountField.value = "";
+  }
+}
+
+/* ===============================
+   EXISTING TAB LOGIC
+================================ */
+function toggleTabField() {
+  const payment = document.getElementById("payment").value;
+  const tabBlock = document.getElementById("tabBlock");
+  const newTabBlock = document.getElementById("newTabBlock");
+  const tabSelect = document.getElementById("tabSelect");
+  const newTabField = document.getElementById("newTabName");
+
+  if (payment === "Tab") {
+    tabBlock.style.display = "block";
+    tabSelect.required = true;
+  } else {
+    tabBlock.style.display = "none";
+    newTabBlock.style.display = "none";
+    tabSelect.required = false;
+    tabSelect.value = "";
+    newTabField.value = "";
+  }
+}
+
+function toggleNewTabField() {
+  const tabSelect = document.getElementById("tabSelect").value;
+  const newTabBlock = document.getElementById("newTabBlock");
+  const newTabField = document.getElementById("newTabName");
+
+  if (tabSelect === "NEW") {
+    newTabBlock.style.display = "block";
+    newTabField.required = true;
+  } else {
+    newTabBlock.style.display = "none";
+    newTabField.required = false;
+    newTabField.value = "";
+  }
+}
+
+/* ===============================
+   ADD ITEM TO CART
 ================================ */
 function addItem() {
   const itemSelect = document.getElementById("item");
@@ -16,6 +89,7 @@ function addItem() {
   let lineTotal = 0;
   let name = itemText;
 
+  // TAB PAYMENT CASE
   if (itemValue === "TAB_PAYMENT") {
     const amount = Number(document.getElementById("tabPaymentAmount").value);
     if (!amount || amount <= 0) {
@@ -43,13 +117,18 @@ function addItem() {
     isTabPayment: itemValue === "TAB_PAYMENT"
   });
 
-  document.getElementById("cart").innerHTML += `<li>${name} = $${lineTotal.toLocaleString()}</li>`;
-  document.getElementById("total").textContent = total.toLocaleString();
-  document.getElementById("tabPaymentAmount").value = "";
+  document.getElementById("cart").innerHTML += `<li>${name} = $${lineTotal}</li>`;
+  document.getElementById("total").textContent = total;
+
+  // reset tab payment field
+  if (itemValue === "TAB_PAYMENT") {
+    document.getElementById("tabPaymentAmount").value = "";
+  }
 }
 
 /* ===============================
-   SUBMIT ORDER SPLIT
+   SUBMIT ORDER
+   (splits sales and tab payments)
 ================================ */
 async function submitOrder() {
   if (cart.length === 0) {
@@ -57,50 +136,72 @@ async function submitOrder() {
     return;
   }
 
+  // Determine final tab if needed
   let tabNameFinal = "";
   if (document.getElementById("payment").value === "Tab") {
     const tabChoice = document.getElementById("tabSelect").value;
-    tabNameFinal = tabChoice === "NEW"
-      ? document.getElementById("newTabName").value.trim()
-      : tabChoice;
-
-    if (!tabNameFinal) {
-      alert("Enter new tab name.");
-      return;
+    if (tabChoice === "NEW") {
+      tabNameFinal = document.getElementById("newTabName").value.trim();
+      if (!tabNameFinal) {
+        alert("Enter new tab name.");
+        return;
+      }
+    } else {
+      tabNameFinal = tabChoice;
     }
   }
 
-  const payload = {
+  // Split cart
+  const itemCart = cart.filter(c => !c.isTabPayment);
+  const tabCart = cart.filter(c => c.isTabPayment);
+
+  // payloads
+  const itemPayload = {
     employee: document.getElementById("employee").value,
     buyer: document.getElementById("buyer").value,
-    paymentType: document.getElementById("payment").value,
+    paymentType: "Item Sale",
+    tabName: "",
+    cart: itemCart,
+    total: itemCart.reduce((a, b) => a + b.lineTotal, 0)
+  };
+
+  const tabPayload = {
+    employee: document.getElementById("employee").value,
+    buyer: document.getElementById("buyer").value,
+    paymentType: "Tab",
     tabName: tabNameFinal,
-    cart: cart,
-    total: total
+    cart: tabCart,
+    total: tabCart.reduce((a, b) => a + b.lineTotal, 0)
   };
 
   try {
-    const res = await fetch(WEBHOOK, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" }
-    });
-
-    const text = await res.text();
-
-    if (text.startsWith("ERROR:")) {
-      alert(text); // show tab negative alert
-      return;
+    if (itemCart.length > 0) {
+      await fetch(WEBHOOK, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(itemPayload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      });
     }
 
-    alert("Order submitted successfully!");
-    cart = [];
-    total = 0;
-    document.getElementById("cart").innerHTML = "";
-    document.getElementById("total").textContent = "0";
+    if (tabCart.length > 0) {
+      await fetch(WEBHOOK, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(tabPayload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      });
+    }
 
+    alert("Order submitted!");
   } catch (err) {
-    console.error(err);
-    alert("Submit failed. Check console.");
+    console.error("Submit failed:", err);
+    alert("Submit FAILED - check console (F12)");
   }
+
+  // reset cart
+  cart = [];
+  total = 0;
+  document.getElementById("cart").innerHTML = "";
+  document.getElementById("total").textContent = "0";
 }
