@@ -5,6 +5,47 @@ console.log("script loaded");
 // =====================================================
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbyuwcxvwPPP_et6DpBX8gHFDCUd2MeEaiLzSLIBmCRuaiwgReww9CuVM1kueJJB8XkI/exec";
 
+
+// =====================================================
+// 🗄 ITEM DATABASE
+// =====================================================
+const ITEM_DB = {
+  BAGS: [
+    ["Skunk Bag", 1500],
+    ["OG Kush Bag", 1500],
+    ["White Widow Bag", 1500],
+    ["AK-47 Bag", 1500],
+    ["Amnesia Bag", 1500],
+    ["Purple Haze Bag", 1500],
+    ["Gelato Bag", 1500],
+    ["Zkittles Bag", 1500]
+  ],
+
+  JOINTS: [
+    ["Skunk Joint", 1800],
+    ["OG Kush Joint", 1800],
+    ["White Widow Joint", 1800],
+    ["AK-47 Joint", 1800],
+    ["Amnesia Joint", 1800],
+    ["Purple Haze Joint", 1800],
+    ["Gelato Joint", 1800],
+    ["Zkittles Joint", 1800]
+  ],
+
+  EDIBLES: [
+    ["Raspberry Gummy Bears", 2000],
+    ["Strawberry Gummy Bears", 2000],
+    ["AK-47 Cookies", 2000],
+    ["Skunk Cookies", 2000],
+    ["White Widow Cookies", 2000]
+  ],
+
+  TAB: [
+    ["TAB_CREATE", 0, "Create New Tab (Deposit)"],
+    ["TAB_ADD", 0, "Add Funds to Existing Tab"]
+  ]
+};
+
 // =====================================================
 // CART STATE
 // =====================================================
@@ -62,73 +103,6 @@ async function fetchTabs() {
   }
 }
 
-// =====================================================
-// 🗄 ITEM DATABASE
-// =====================================================
-const ITEM_DB = {
-  BAGS: [
-    ["Skunk Bag", 1500],
-    ["OG Kush Bag", 1500],
-    ["White Widow Bag", 1500],
-    ["AK-47 Bag", 1500],
-    ["Amnesia Bag", 1500],
-    ["Purple Haze Bag", 1500],
-    ["Gelato Bag", 1500],
-    ["Zkittles Bag", 1500]
-  ],
-
-  JOINTS: [
-    ["Skunk Joint", 1800],
-    ["OG Kush Joint", 1800],
-    ["White Widow Joint", 1800],
-    ["AK-47 Joint", 1800],
-    ["Amnesia Joint", 1800],
-    ["Purple Haze Joint", 1800],
-    ["Gelato Joint", 1800],
-    ["Zkittles Joint", 1800]
-  ],
-
-  EDIBLES: [
-    ["Raspberry Gummy Bears", 2000],
-    ["Strawberry Gummy Bears", 2000],
-    ["AK-47 Cookies", 2000],
-    ["Skunk Cookies", 2000],
-    ["White Widow Cookies", 2000]
-  ],
-
-  TAB: [
-    ["TAB_CREATE", 0, "Create New Tab (Deposit)"],
-    ["TAB_ADD", 0, "Add Funds to Existing Tab"]
-  ]
-};
-
-// =====================================================
-// 🛒 CART STATE
-// =====================================================
-let cart = [];
-let total = 0;
-
-// =====================================================
-// 📦 INIT EVENTS AFTER DOM LOAD
-// =====================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const categoryEl = document.getElementById("category");
-  if (categoryEl) categoryEl.addEventListener("change", populateItems);
-
-  const itemEl = document.getElementById("item");
-  if (itemEl) itemEl.addEventListener("change", () => {
-    toggleTabPaymentItem();
-    toggleTabNameField();
-  });
-
-  const paymentEl = document.getElementById("payment");
-  if (paymentEl) paymentEl.addEventListener("change", toggleTabField);
-
-  const tabSelectEl = document.getElementById("existingTabSelect");
-  if (tabSelectEl) tabSelectEl.addEventListener("change", toggleNewTabField);
-
-  fetchTabs(); // load existing tabs dynamically
-});
 
 // =====================================================
 // 📦 POPULATE ITEMS
