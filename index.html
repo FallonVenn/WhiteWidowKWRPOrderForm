@@ -7,13 +7,31 @@
 
 <h2>Order Entry</h2>
 
-Employee: <input id="employee"><br><br>
-Buyer: <input id="buyer"><br><br>
+Employee:
+<select id="employee" name="employee" required>
+  <option value="">Select Employee</option>
+  <option>Daniel Taylor</option>
+  <option>Jeremy Cobain</option>
+  <option>Lucie Asmodeus</option>
+  <option>Thomas White</option>
+  <option>Fallon Graves</option>
+  <option>Benny Pegorino</option>
+  
+</select>
+<br><br>
+
+Buyer:
+<input id="buyer" name="buyer" placeholder="Enter buyer name" required>
+<br><br>
+
+
 
 Item:
 <select id="item">
-  <option value="Lean" data-price="250">Lean - $250</option>
-  <option value="Burger" data-price="75">Burger - $75</option>
+  <option value="White Widow 2g Bag" data-price="1500">White Widow 2g Bag - $1500 per</option>
+  <option value="White Widow Joint" data-price="1800">White Widow Joint - $1800 per</option>
+  <option value="Strawberry Gummy Bears" data-price="2000">Strawberry Gummy Bears - $2000 per</option>
+  <option value="AK-47 Cookies" data-price="2000">AK-47 Cookies - $2000 per</option>
 </select>
 
 Qty: <input id="qty" type="number" value="1" min="1">
@@ -26,19 +44,37 @@ Qty: <input id="qty" type="number" value="1" min="1">
 <h3>Total: $<span id="total">0</span></h3>
 
 Payment:
-<select id="payment">
-  <option>Personal</option>
-  <option>Charge Tab</option>
+<select id="payment" name="paymentType" required onchange="toggleTabField()">
+  <option value="" disabled selected>Select Payment</option>
+  <option>Cash</option>
+  <option>Card</option>
+  <option>Tab</option>
 </select>
 
-Tab Name: <input id="tabName"><br><br>
+Tab Name:
+<input id="tabName" name="tabName" placeholder="Enter tab name" style="display:none;">
+<br><br>
 
-<button onclick="submitOrder()">Submit Order</button>
+<button type="button" onclick="submitOrder()">Submit Order</button>
 
 <script>
 let cart = [];
 let total = 0;
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbyu7uQT7Gos6IsgrJvtEX6y7D66Y8_xOokGVqys2OUqMAL6OrXzlzzYO1GbT-6iMAh0/exec";
+
+function toggleTabField() {
+  const payment = document.getElementById("payment").value;
+  const tabField = document.getElementById("tabName");
+
+  if (payment === "Tab") {
+    tabField.style.display = "inline-block";
+    tabField.required = true;
+  } else {
+    tabField.style.display = "none";
+    tabField.required = false;
+    tabField.value = "";
+  }
+}
 
 function addItem() {
   const itemSelect = document.getElementById("item");
@@ -58,6 +94,11 @@ function addItem() {
 }
 
 async function submitOrder() {
+  if (cart.length === 0) {
+    alert("Cart is empty!");
+    return;
+  }
+
   const payload = {
     employee: document.getElementById("employee").value,
     buyer: document.getElementById("buyer").value,
@@ -74,6 +115,12 @@ async function submitOrder() {
   });
 
   alert("Order submitted!");
+
+  // optional reset (nice for POS)
+  cart = [];
+  total = 0;
+  document.getElementById("cart").innerHTML = "";
+  document.getElementById("total").textContent = "0";
 }
 </script>
 
