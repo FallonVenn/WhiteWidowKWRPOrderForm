@@ -16,7 +16,6 @@ Employee:
   <option>Thomas White</option>
   <option>Fallon Graves</option>
   <option>Benny Pegorino</option>
-  
 </select>
 <br><br>
 
@@ -24,17 +23,23 @@ Buyer:
 <input id="buyer" name="buyer" placeholder="Enter buyer name" required>
 <br><br>
 
-
-
 Item:
-<select id="item">
+<!-- ✅ added onchange -->
+<select id="item" onchange="toggleTabPaymentItem()">
   <option value="White Widow 2g Bag" data-price="1500">White Widow 2g Bag - $1500 per</option>
   <option value="White Widow Joint" data-price="1800">White Widow Joint - $1800 per</option>
   <option value="Strawberry Gummy Bears" data-price="2000">Strawberry Gummy Bears - $2000 per</option>
   <option value="AK-47 Cookies" data-price="2000">AK-47 Cookies - $2000 per</option>
+  <option value="TAB_PAYMENT" data-price="0">Tab Payment - Custom Amount - FILL OUT SEPERATE FROM ITEMS</option>
 </select>
 
 Qty: <input id="qty" type="number" value="1" min="1">
+
+<!-- ✅ NEW: tab payment amount box -->
+<div id="tabPaymentBlock" style="display:none;">
+  Amount to Add to Tab:
+  <input id="tabPaymentAmount" type="number" min="1" placeholder="Enter dollar amount">
+</div>
 
 <button onclick="addItem()">Add to Cart</button>
 
@@ -50,7 +55,6 @@ Payment:
   <option value="Card">Card</option>
   <option value="Tab">Tab</option>
 </select>
-
 
 <div id="tabBlock" style="display:none;">
   Tab:
@@ -69,7 +73,6 @@ Payment:
 </div>
 <br>
 
-
 <button type="button" onclick="submitOrder()">Submit Order</button>
 
 <script>
@@ -77,6 +80,27 @@ let cart = [];
 let total = 0;
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbyu7uQT7Gos6IsgrJvtEX6y7D66Y8_xOokGVqys2OUqMAL6OrXzlzzYO1GbT-6iMAh0/exec";
 
+/* ===============================
+   TAB PAYMENT VISIBILITY
+================================ */
+function toggleTabPaymentItem() {
+  const itemValue = document.getElementById("item").value;
+  const block = document.getElementById("tabPaymentBlock");
+  const amountField = document.getElementById("tabPaymentAmount");
+
+  if (itemValue === "TAB_PAYMENT") {
+    block.style.display = "block";
+    amountField.required = true;
+  } else {
+    block.style.display = "none";
+    amountField.required = false;
+    amountField.value = "";
+  }
+}
+
+/* ===============================
+   EXISTING TAB LOGIC
+================================ */
 function toggleTabField() {
   const payment = document.getElementById("payment").value;
   const tabBlock = document.getElementById("tabBlock");
@@ -111,30 +135,67 @@ function toggleNewTabField() {
   }
 }
 
+/* ===============================
+   ADD ITEM (UPDATED)
+================================ */
 function addItem() {
   const itemSelect = document.getElementById("item");
   const qty = Number(document.getElementById("qty").value);
-  const price = Number(itemSelect.selectedOptions[0].dataset.price);
-  const name = itemSelect.value;
+  const itemValue = itemSelect.value;
+  const itemText = itemSelect.selectedOptions[0].text;
 
-  const lineTotal = price * qty;
+  let price = Number(itemSelect.selectedOptions[0].dataset.price);
+  let lineTotal = 0;
+  let name = itemText;
+
+  // 🔥 TAB PAYMENT SPECIAL CASE
+  if (itemValue === "TAB_PAYMENT") {
+    const amount = Number(document.getElementById("tabPaymentAmount").value);
+
+    if (!amount || amount <= 0) {
+      alert("Enter amount to add to tab.");
+      return;
+    }
+
+    price = amount;
+    lineTotal = amount;
+    name = "Tab Payment";
+  } else {
+    if (qty <= 0) {
+      alert("Quantity must be at least 1.");
+      return;
+    }
+
+    lineTotal = price * qty;
+  }
+
   total += lineTotal;
 
-  cart.push({ name, qty, price, lineTotal });
+  cart.push({
+    name,
+    qty: itemValue === "TAB_PAYMENT" ? 1 : qty,
+    price,
+    lineTotal,
+    isTabPayment: itemValue === "TAB_PAYMENT"
+  });
 
   document.getElementById("cart").innerHTML +=
-    `<li>${name} x${qty} = $${lineTotal}</li>`;
+    `<li>${name} = $${lineTotal}</li>`;
 
   document.getElementById("total").textContent = total;
+
+  document.getElementById("tabPaymentAmount").value = "";
 }
 
+/* ===============================
+   SUBMIT ORDER
+================================ */
 async function submitOrder() {
   if (cart.length === 0) {
     alert("Cart is empty!");
     return;
   }
 
-  // 🔹 determine final tab name
   let tabNameFinal = "";
 
   if (document.getElementById("payment").value === "Tab") {
@@ -169,13 +230,12 @@ async function submitOrder() {
 
   alert("Order submitted!");
 
-  // reset POS
   cart = [];
   total = 0;
   document.getElementById("cart").innerHTML = "";
   document.getElementById("total").textContent = "0";
 }
-
+</script>
 
 </body>
 </html>
