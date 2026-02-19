@@ -79,12 +79,12 @@ async function fetchTabs() {
 
     console.log("Tabs received:", data);
 
-    if (!Array.isArray(data)) {
-      console.warn("Tabs response not array:", data);
-      return;
-    }
+    if (!Array.isArray(data)) return;
 
-    // Populate TAB_ADD dropdown
+    // payment dropdown
+    populatePaymentTabs(data);
+
+    // existing tab dropdown (TAB_ADD)
     const existingTabSelect = document.getElementById("existingTabSelect");
     if (existingTabSelect) {
       existingTabSelect.innerHTML = '<option value="">Select Tab</option>';
@@ -95,9 +95,6 @@ async function fetchTabs() {
         existingTabSelect.appendChild(opt);
       });
     }
-
-    // Populate PAYMENT dropdown (NO NEW OPTION)
-    populatePaymentTabs(data);
 
   } catch (err) {
     console.error("Failed to fetch tabs:", err);
@@ -165,6 +162,8 @@ function toggleTabPaymentItem() {
   const tabAmountField = document.getElementById("tabPaymentAmount");
   const tabAmountLabel = document.getElementById("tabAmountLabel");
 
+  if (!qtyField) return;
+
   if (itemValue === "TAB_CREATE" || itemValue === "TAB_ADD") {
     qtyField.style.display = "none";
     qtyLabel.style.display = "none";
@@ -192,6 +191,8 @@ function toggleTabNameField() {
   const newTabBlock = document.getElementById("newTabBlock");
   const existingTabBlock = document.getElementById("existingTabBlock");
 
+  if (!newTabBlock || !existingTabBlock) return;
+
   if (itemValue === "TAB_CREATE") {
     newTabBlock.style.display = "block";
     existingTabBlock.style.display = "none";
@@ -210,22 +211,89 @@ function toggleTabNameField() {
 function toggleTabField() {
   const payment = document.getElementById("payment").value;
   const tabBlock = document.getElementById("tabBlock");
-
-  tabBlock.style.display = payment === "Tab" ? "block" : "none";
+  if (tabBlock) {
+    tabBlock.style.display = payment === "Tab" ? "block" : "none";
+  }
 }
 
 // =====================================================
 // 🧾 ADD ITEM TO CART
 // =====================================================
 function addItem() {
-  alert("AddItem wired correctly.");
+  const itemSelect = document.getElementById("item");
+  const qty = Number(document.getElementById("qty")?.value || 1);
+  const tabAmount = Number(document.getElementById("tabPaymentAmount")?.value || 0);
+
+  if (!itemSelect || !itemSelect.value) {
+    alert("Select an item first.");
+    return;
+  }
+
+  const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+  const itemName = itemSelect.value;
+  let price = Number(selectedOption.dataset.price || 0);
+
+  // tab deposits use custom amount
+  if (itemName === "TAB_CREATE" || itemName === "TAB_ADD") {
+    if (!tabAmount || tabAmount <= 0) {
+      alert("Enter tab amount.");
+      return;
+    }
+    price = tabAmount;
+  }
+
+  const lineTotal = price * qty;
+
+  cart.push({
+    item: itemName,
+    qty,
+    price,
+    lineTotal
+  });
+
+  total += lineTotal;
+
+  console.log("Cart:", cart);
+  console.log("Total:", total);
+
+  alert(`Added to cart. Total now $${total}`);
 }
 
 // =====================================================
 // 🏦 SUBMIT ORDER
 // =====================================================
-function submitOrder() {
-  alert("SubmitOrder wired correctly.");
+async function submitOrder() {
+  if (cart.length === 0) {
+    alert("Cart is empty.");
+    return;
+  }
+
+  const payment = document.getElementById("payment")?.value || "";
+  const tabName = document.getElementById("tabSelect")?.value || "";
+
+  const payload = {
+    cart,
+    total,
+    payment,
+    tabName
+  };
+
+  console.log("Submitting:", payload);
+
+  try {
+    await fetch(WEBHOOK, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    alert("Order submitted!");
+    cart = [];
+    total = 0;
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to submit order.");
+  }
 }
 
 // =====================================================
