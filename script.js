@@ -228,26 +228,48 @@ function addItem() {
 
   const itemSelect = document.getElementById("item");
   const itemValue = itemSelect.value;
-  const itemText = itemSelect.selectedOptions[0].text;
   const qty = Number(document.getElementById("qty").value);
 
   let price = Number(itemSelect.selectedOptions[0].dataset.price);
   let lineTotal = 0;
-  let name = itemText;
+  let name = itemSelect.selectedOptions[0].text; // default
   let isTabPayment = false;
 
-  // TAB ACTIONS
-  if (itemValue === "TAB_CREATE" || itemValue === "TAB_ADD") {
+  // -------------------- TAB ACTIONS --------------------
+  if (itemValue === "TAB_CREATE") {
     const amount = Number(document.getElementById("tabPaymentAmount").value);
+    const groupName = document.getElementById("newTabName").value.trim(); // <-- actual group name
     if (!amount || amount <= 0) {
       alert("Enter amount to add to tab.");
       return;
     }
+    if (!groupName) {
+      alert("Enter new tab name.");
+      return;
+    }
     price = amount;
     lineTotal = amount;
-    name = itemValue === "TAB_CREATE" ? "New Tab Deposit" : "Add Funds to Tab";
+    name = groupName; // store the actual group name
     isTabPayment = true;
+
+  } else if (itemValue === "TAB_ADD") {
+    const amount = Number(document.getElementById("tabPaymentAmount").value);
+    const groupName = document.getElementById("existingTabSelect").value; // selected existing tab
+    if (!amount || amount <= 0) {
+      alert("Enter amount to add to tab.");
+      return;
+    }
+    if (!groupName) {
+      alert("Select an existing tab.");
+      return;
+    }
+    price = amount;
+    lineTotal = amount;
+    name = groupName; // store the actual tab name
+    isTabPayment = true;
+
   } else {
+    // normal items
     if (qty <= 0) {
       alert("Quantity must be at least 1.");
       return;
@@ -262,7 +284,9 @@ function addItem() {
     qty: isTabPayment ? 1 : qty,
     price,
     lineTotal,
-    isTabPayment
+    isTabPayment,
+    tabAction: itemValue === "TAB_CREATE" ? "New Tab Deposit" :
+               itemValue === "TAB_ADD" ? "Add Funds to Tab" : "" // store action separately
   });
 
   document.getElementById("cart").innerHTML += `<li>${name} = $${lineTotal}</li>`;
