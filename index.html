@@ -11,6 +11,7 @@
 
 <h2>Order Entry</h2>
 
+<!-- ================= EMPLOYEE ================= -->
 Employee:
 <select id="employee" required>
   <option value="">Select Employee</option>
@@ -23,6 +24,7 @@ Employee:
 </select>
 <br><br>
 
+<!-- ================= BUYER ================= -->
 Buyer:
 <input id="buyer" placeholder="Enter buyer name" required>
 <br><br>
@@ -44,21 +46,18 @@ Item:
   <option value="">Select item</option>
 </select>
 
-<span id="qtyLabel">Qty:</span>
+<span id="qtyLabel">Quantity:</span>
 <input id="qty" type="number" value="1" min="1">
 
-<!-- hidden for tab payment -->
-<span id="tabAmountLabel" style="display:none;">Amount to Add to Tab:</span>
-<input id="tabPaymentAmount" type="number" min="1" style="display:none;" placeholder="Enter dollar amount">
+<button type="button" onclick="addItem()">Add to Cart</button>
 
-
-<button onclick="addItem()">Add to Cart</button>
-
+<!-- ================= CART ================= -->
 <h3>Cart</h3>
 <ul id="cart"></ul>
 
 <h3>Total: $<span id="total">0</span></h3>
 
+<!-- ================= PAYMENT ================= -->
 Payment Method:
 <select id="payment" required onchange="toggleTabField()">
   <option value="" disabled selected>Select Payment</option>
@@ -67,6 +66,7 @@ Payment Method:
   <option value="Tab">Tab (Charge Purchase to Tab)</option>
 </select>
 
+<!-- TAB SELECT (only when charging purchase to tab) -->
 <div id="tabBlock" style="display:none;">
   Tab:
   <select id="tabSelect">
@@ -75,6 +75,7 @@ Payment Method:
   </select>
 </div>
 
+<!-- NEW TAB NAME (only when NEW selected) -->
 <div id="newTabBlock" style="display:none;">
   New Tab Name:
   <input id="newTabName" placeholder="Enter new tab name">
@@ -82,13 +83,21 @@ Payment Method:
 
 <br>
 
-<form id="orderForm" action="https://script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec" method="post" target="hiddenIframe">
+<!-- ================= FORM ================= -->
+<form id="orderForm"
+      action="https://script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec"
+      method="post"
+      target="hiddenIframe">
+
   <input type="hidden" name="data" id="formData">
 </form>
+
 <iframe name="hiddenIframe" style="display:none;"></iframe>
 
 <button type="button" onclick="submitOrder()">Submit Order</button>
 
+<!-- ================= SCRIPT ================= -->
 <script src="script.js"></script>
+
 </body>
 </html>
