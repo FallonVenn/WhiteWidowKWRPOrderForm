@@ -46,21 +46,186 @@ const ITEM_DB = {
 let cart = [];
 let total = 0;
 
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbzeLu0a62QSi7bvM2Ir_rTlgeRR-tQI3PN9vgftC_g8Tbeu0ZZvgEjvlXF8I09uXXig/exec";
+
 // =====================================================
-// 📦 POPULATE ITEMS (CATEGORY → ITEM)
+// 📦 POPULATE ITEMS
 // =====================================================
 function populateItems() {
   const categoryEl = document.getElementById("category");
   const itemSelect = document.getElementById("item");
 
-  if (!categoryEl || !itemSelect) {
-    console.warn("populateItems: missing elements");
+  if (!categoryEl || !itemSelect) return;
+
+  const category = categoryEl.value;
+  itemSelect.innerHTML = '<option value="">Select item</option>';
+
+  if (!category || !ITEM_DB[category]) return;
+
+  ITEM_DB[category].forEach(entry => {
+    const option = document.createElement("option");
+
+    option.value = entry[0];
+    option.dataset.price = Number(entry[1]);
+
+    if (category === "TAB") {
+      option.textContent = entry[2];
+    } else {
+      option.textContent = `${entry[0]} - $${entry[1]}`;
+    }
+
+    itemSelect.appendChild(option);
+  });
+
+  toggleTabPaymentItem();
+}
+
+// =====================================================
+// 🔄 TOGGLE TAB AMOUNT UI
+// =====================================================
+function toggleTabPaymentItem() {
+  const itemEl = document.getElementById("item");
+  const qtyField = document.getElementById("qty");
+  const qtyLabel = document.getElementById("qtyLabel");
+  const tabAmountField = document.getElementById("tabPaymentAmount");
+  const tabAmountLabel = document.getElementById("tabAmountLabel");
+
+  if (!itemEl) return;
+
+  const itemValue = itemEl.value;
+  const isTabAction =
+    itemValue === "TAB_CREATE" ||
+    itemValue === "TAB_ADD";
+
+  if (isTabAction) {
+    qtyField.style.display = "none";
+    qtyLabel.style.display = "none";
+    qtyField.value = 1;
+
+    tabAmountField.style.display = "inline-block";
+    tabAmountLabel.style.display = "inline-block";
+  } else {
+    qtyField.style.display = "inline-block";
+    qtyLabel.style.display = "inline-block";
+
+    tabAmountField.style.display = "none";
+    tabAmountLabel.style.display = "none";
+    tabAmountField.value = "";
+  }
+}
+
+// =====================================================
+// ➕ ADD ITEM
+// =====================================================
+function addItem() {
+  const employee = document.getElementById("employee").value;
+  const buyer = document.getElementById("buyer").value;
+
+  if (!employee) {
+    alert("Select an employee before adding items.");
     return;
   }
 
-  const category = categoryEl.value;
+  if (!buyer) {
+    alert("Enter buyer name before adding items.");
+    return;
+  }
 
-  // always reset dropdown
-  itemSelect.innerHTML = '<option value="">Select item</option>';
+  const itemSelect = document.getElementById("item");
+  const option = itemSelect.selectedOptions[0];
 
-  if (!category || !ITEM_DB[category]()_
+  if (!option) {
+    alert("Select an item first.");
+    return;
+  }
+
+  const itemValue = option.value;
+  const price = Number(option.dataset.price);
+
+  if (isNaN(price)) {
+    alert("Price error.");
+    return;
+  }
+
+  let qty = Number(document.getElementById("qty").value) || 1;
+  let lineTotal = 0;
+  let name = option.textContent;
+  let isTabAction = false;
+
+  // TAB actions
+  if (itemValue === "TAB_CREATE" || itemValue === "TAB_ADD") {
+    const amount = Number(document.getElementById("tabPaymentAmount").value);
+
+    if (!amount || amount <= 0) {
+      alert("Enter amount to add to tab.");
+      return;
+    }
+
+    lineTotal = amount;
+    qty = 1;
+    isTabAction = true;
+  } else {
+    if (qty <= 0) {
+      alert("Quantity must be at least 1.");
+      return;
+    }
+
+    lineTotal = price * qty;
+  }
+
+  total += lineTotal;
+
+  cart.push({
+    name,
+    qty,
+    price: isTabAction ? lineTotal : price,
+    lineTotal,
+    isTabPayment: isTabAction
+  });
+
+  document.getElementById("cart").innerHTML +=
+    `<li>${name} x${qty} = $${lineTotal}</li>`;
+
+  document.getElementById("total").textContent = total;
+
+  if (isTabAction) {
+    document.getElementById("tabPaymentAmount").value = "";
+  }
+}
+
+// =====================================================
+// 🚀 SUBMIT ORDER
+// =====================================================
+async function submitOrder() {
+  if (cart.length === 0) {
+    alert("Cart is empty!");
+    return;
+  }
+
+  const payload = {
+    employee: document.getElementById("employee").value,
+    buyer: document.getElementById("buyer").value,
+    originalPaymentMethod: document.getElementById("payment").value,
+    cart,
+    total
+  };
+
+  try {
+    await fetch(WEBHOOK, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
+    });
+
+    alert("Order submitted!");
+  } catch (err) {
+    console.error(err);
+    alert("Submit failed.");
+  }
+
+  cart = [];
+  total = 0;
+  document.getElementById("cart").innerHTML = "";
+  document.getElementById("total").textContent = "0";
+}
