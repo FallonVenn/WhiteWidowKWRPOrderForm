@@ -3,7 +3,7 @@
 ================================ */
 let cart = [];
 let total = 0;
-const WEBHOOK = "https://https://"script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec";
+const WEBHOOK = "https://"script.google.com/macros/s/AKfycby_CYPk1QyM0zOU0AFI83N7xCKPmVlgFjkstwD-lLh3sm_pGJ765SwLAvGhdCbuSobn/exec";
 
 /* ===============================
    TOGGLE TAB PAYMENT INPUT
