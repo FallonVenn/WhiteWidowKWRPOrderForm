@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FiveM Business POS</title>
+</head>
+<body>
+
+<h2>Order Entry</h2>
+
+Employee: <input id="employee"><br><br>
+Buyer: <input id="buyer"><br><br>
+
+Item:
+<select id="item">
+  <option value="Lean" data-price="250">Lean - $250</option>
+  <option value="Burger" data-price="75">Burger - $75</option>
+</select>
+
+Qty: <input id="qty" type="number" value="1" min="1">
+
+<button onclick="addItem()">Add to Cart</button>
+
+<h3>Cart</h3>
+<ul id="cart"></ul>
+
+<h3>Total: $<span id="total">0</span></h3>
+
+Payment:
+<select id="payment">
+  <option>Personal</option>
+  <option>Charge Tab</option>
+</select>
+
+Tab Name: <input id="tabName"><br><br>
+
+<button onclick="submitOrder()">Submit Order</button>
+
+<script>
+let cart = [];
+let total = 0;
+const WEBHOOK = "PASTE_YOUR_WEBHOOK_URL_HERE";
+
+function addItem() {
+  const itemSelect = document.getElementById("item");
+  const qty = Number(document.getElementById("qty").value);
+  const price = Number(itemSelect.selectedOptions[0].dataset.price);
+  const name = itemSelect.value;
+
+  const lineTotal = price * qty;
+  total += lineTotal;
+
+  cart.push({ name, qty, price, lineTotal });
+
+  document.getElementById("cart").innerHTML +=
+    `<li>${name} x${qty} = $${lineTotal}</li>`;
+
+  document.getElementById("total").textContent = total;
+}
+
+async function submitOrder() {
+  const payload = {
+    employee: document.getElementById("employee").value,
+    buyer: document.getElementById("buyer").value,
+    paymentType: document.getElementById("payment").value,
+    tabName: document.getElementById("tabName").value,
+    cart: cart,
+    total: total
+  };
+
+  await fetch(WEBHOOK, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" }
+  });
+
+  alert("Order submitted!");
+}
+</script>
+
+</body>
+</html>
