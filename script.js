@@ -5,7 +5,7 @@ console.log("script loaded");
 let cart = [];
 let total = 0;
 
-const WEBHOOK = "https://script.google.com/macros/s/AKfycbynIeXWDXwkVpEgJi7uSGLJmi51LJ4IQtM2TStHSxano1pISoHi5kh7ZtajHngPNHAL/exec";
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbyA4tDfO13dDlnZQikQXm4dOvXil0v2RrLQ4rd_AVi0EW1iiIH9HWFwBCHiDnVw78g6/exec";
 
 
 /* ===============================
