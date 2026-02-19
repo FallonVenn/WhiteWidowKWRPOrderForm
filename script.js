@@ -64,11 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const paymentEl = document.getElementById("payment");
   if (paymentEl) paymentEl.addEventListener("change", toggleTabField);
 
-  fetchTabs(); // load existing tabs
+  fetchTabs();
 });
 
 // =====================================================
-// 🌐 FETCH EXISTING TABS (NO "NEW TAB" OPTION)
+// 🌐 FETCH EXISTING TABS
 // =====================================================
 async function fetchTabs() {
   try {
@@ -79,29 +79,46 @@ async function fetchTabs() {
 
     console.log("Tabs received:", data);
 
-    const existingTabSelect = document.getElementById("existingTabSelect");
-    if (!existingTabSelect) {
-      console.warn("existingTabSelect not found");
-      return;
-    }
-
     if (!Array.isArray(data)) {
       console.warn("Tabs response not array:", data);
       return;
     }
 
-    existingTabSelect.innerHTML = '<option value="">Select Tab</option>';
+    // Populate TAB_ADD dropdown
+    const existingTabSelect = document.getElementById("existingTabSelect");
+    if (existingTabSelect) {
+      existingTabSelect.innerHTML = '<option value="">Select Tab</option>';
+      data.forEach(tabName => {
+        const opt = document.createElement("option");
+        opt.value = tabName;
+        opt.textContent = tabName;
+        existingTabSelect.appendChild(opt);
+      });
+    }
 
-    data.forEach(tabName => {
-      const opt = document.createElement("option");
-      opt.value = tabName;
-      opt.textContent = tabName;
-      existingTabSelect.appendChild(opt);
-    });
+    // Populate PAYMENT dropdown (NO NEW OPTION)
+    populatePaymentTabs(data);
 
   } catch (err) {
     console.error("Failed to fetch tabs:", err);
   }
+}
+
+// =====================================================
+// 💳 POPULATE PAYMENT TAB DROPDOWN
+// =====================================================
+function populatePaymentTabs(tabNames) {
+  const paymentSelect = document.getElementById("tabSelect");
+  if (!paymentSelect) return;
+
+  paymentSelect.innerHTML = '<option value="">Select Tab</option>';
+
+  tabNames.forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    paymentSelect.appendChild(opt);
+  });
 }
 
 // =====================================================
@@ -196,3 +213,27 @@ function toggleTabField() {
 
   tabBlock.style.display = payment === "Tab" ? "block" : "none";
 }
+
+// =====================================================
+// 🧾 ADD ITEM TO CART
+// =====================================================
+function addItem() {
+  alert("AddItem wired correctly.");
+}
+
+// =====================================================
+// 🏦 SUBMIT ORDER
+// =====================================================
+function submitOrder() {
+  alert("SubmitOrder wired correctly.");
+}
+
+// =====================================================
+// 🌍 EXPOSE FUNCTIONS TO HTML
+// =====================================================
+window.addItem = addItem;
+window.submitOrder = submitOrder;
+window.populateItems = populateItems;
+window.toggleTabField = toggleTabField;
+window.toggleTabNameField = toggleTabNameField;
+window.toggleTabPaymentItem = toggleTabPaymentItem;
