@@ -156,11 +156,13 @@ async function fetchItemPrices() {
 
     console.log("Item prices received:", data);
 
-    // ✅ Expecting object keyed by category
+    // ✅ Expect object keyed by category
     if (!data || typeof data !== "object") return;
 
-    // ✅ overwrite cache directly
+    // ✅ Directly store it
     ITEM_PRICE_CACHE = data;
+
+    console.log("ITEM_PRICE_CACHE now:", ITEM_PRICE_CACHE);
 
   } catch (err) {
     console.error("Failed to fetch item prices:", err);
@@ -194,6 +196,10 @@ function populateItems() {
 
   const category = categoryEl.value;
   itemSelect.innerHTML = '<option value="">Select item</option>';
+
+  if (!ITEM_PRICE_CACHE || Object.keys(ITEM_PRICE_CACHE).length === 0) {
+  console.warn("Item cache not loaded yet");
+}
 
   // ⭐ TAB stays static forever
   if (category === "TAB" && ITEM_DB.TAB) {
