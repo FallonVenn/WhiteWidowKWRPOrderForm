@@ -64,6 +64,13 @@ body {
   box-shadow: 0 0 10px rgba(0,0,0,0.4);
 }
 
+/* ⭐ make cart panel fixed height */
+.cart-panel {
+  display: flex;
+  flex-direction: column;
+  height: 600px; /* adjust if desired */
+}
+
 /* ===============================
    🧾 FORM ELEMENTS
 =============================== */
@@ -92,39 +99,40 @@ button:hover {
 }
 
 /* ===============================
-   🛒 CART LIST
+   🛒 SCROLLABLE CART LIST
 =============================== */
 #cart {
   list-style: none;
   padding-left: 0;
+  padding-right: 6px;
+
+  overflow-y: auto;
+  flex: 1;
+  max-height: 100%;
 }
 
-#cart li {
-  background: #333;
-  margin-bottom: 6px;
-  padding: 6px;
+/* nice dark scrollbar */
+#cart::-webkit-scrollbar {
+  width: 8px;
+}
+
+#cart::-webkit-scrollbar-track {
+  background: #1f1f1f;
   border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-/* ===============================
-   💰 TOTAL
-=============================== */
-#total {
-  font-weight: bold;
-  font-size: 18px;
+#cart::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+#cart::-webkit-scrollbar-thumb:hover {
+  background: #777;
 }
 
 /* ===============================
    🧾 RECEIPT STYLE CART
 =============================== */
-#cart {
-  list-style: none;
-  padding-left: 0;
-}
-
 #cart li {
   background: #2f2f2f;
   margin-bottom: 8px;
@@ -149,6 +157,14 @@ button:hover {
 }
 
 /* ===============================
+   💰 TOTAL
+=============================== */
+#total {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* ===============================
    ❌ REMOVE BUTTON (RED)
 =============================== */
 .remove-btn {
@@ -166,4 +182,3 @@ button:hover {
 .remove-btn:hover {
   background-color: #ff3b3b;
 }
-
