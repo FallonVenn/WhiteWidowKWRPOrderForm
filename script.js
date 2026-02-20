@@ -405,7 +405,25 @@ function addItem() {
 }
 
 // =====================================================
-// 🧾 RENDER CART (FIXED)
+// ❌ REMOVE ITEM FROM CART
+// =====================================================
+function removeCartItem(index) {
+  if (index < 0 || index >= cart.length) return;
+
+  // subtract from total first
+  total -= Number(cart[index].lineTotal || 0);
+
+  // remove item
+  cart.splice(index, 1);
+
+  // safety clamp
+  if (total < 0) total = 0;
+
+  renderCart();
+}
+
+// =====================================================
+// 🧾 RENDER CART (WITH REMOVE BUTTON)
 // =====================================================
 function renderCart() {
   const cartEl = document.getElementById("cart");
@@ -415,9 +433,21 @@ function renderCart() {
 
   cartEl.innerHTML = "";
 
-  cart.forEach(item => {
+  cart.forEach((item, index) => {
     const li = document.createElement("li");
-    li.textContent = `${item.name} x${item.qty} - $${item.lineTotal}`;
+
+    // text
+    const textSpan = document.createElement("span");
+    textSpan.textContent = `${item.name} x${item.qty} - $${item.lineTotal}`;
+
+    // remove button
+    const btn = document.createElement("button");
+    btn.textContent = "Remove";
+    btn.style.marginLeft = "10px";
+    btn.onclick = () => removeCartItem(index);
+
+    li.appendChild(textSpan);
+    li.appendChild(btn);
     cartEl.appendChild(li);
   });
 
@@ -541,3 +571,5 @@ window.populateItems = populateItems;
 window.toggleTabField = toggleTabField;
 window.toggleTabNameField = toggleTabNameField;
 window.toggleTabPaymentItem = toggleTabPaymentItem;
+window.removeCartItem = removeCartItem;
+
