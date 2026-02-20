@@ -10,18 +10,25 @@ body {
 
   /* ⭐ center whole POS */
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   min-height: 100vh;
 }
 
 /* ===============================
-   🏷 Logo
+   🏷 HEADER / LOGO
 =============================== */
-.pos-title {
+.pos-header {
+  text-align: center;
+  width: 100%;
+  margin-top: 20px;
+}
+
 .pos-header img {
   display: block;
-  margin: 0 auto;
+  margin: 0 auto 10px auto;
+  max-width: 150px;
+  height: auto;
 }
 
 /* ===============================
@@ -30,7 +37,7 @@ body {
 .pos-title {
   text-align: center;
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 /* ===============================
