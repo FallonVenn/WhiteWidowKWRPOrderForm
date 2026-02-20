@@ -52,6 +52,21 @@ let ITEM_PRICE_CACHE = {
 };
 
 // =====================================================
+// 🔄 CATEGORY NORMALIZER
+// =====================================================
+function normalizeCategoryKey(key) {
+  if (!key) return "";
+
+  key = key.toString().trim().toUpperCase();
+
+  if (key === "BAG") return "BAGS";
+  if (key === "JOINT") return "JOINTS";
+  if (key === "EDIBLE") return "EDIBLES";
+
+  return key;
+}
+
+// =====================================================
 // CART STATE
 // =====================================================
 let cart = [];
@@ -156,13 +171,19 @@ async function fetchItemPrices() {
 
     console.log("Item prices received:", data);
 
-    // ✅ Expect object keyed by category
     if (!data || typeof data !== "object") return;
 
-    // ✅ Directly store it
-    ITEM_PRICE_CACHE = data;
+    // ✅ Normalize keys from Apps Script
+    const normalized = {};
 
-    console.log("ITEM_PRICE_CACHE now:", ITEM_PRICE_CACHE);
+    Object.keys(data).forEach(key => {
+      const fixedKey = normalizeCategoryKey(key);
+      normalized[fixedKey] = data[key];
+    });
+
+    ITEM_PRICE_CACHE = normalized;
+
+    console.log("ITEM_PRICE_CACHE normalized:", ITEM_PRICE_CACHE);
 
   } catch (err) {
     console.error("Failed to fetch item prices:", err);
@@ -194,8 +215,13 @@ function populateItems() {
   const itemSelect = document.getElementById("item");
   if (!categoryEl || !itemSelect) return;
 
-  const category = categoryEl.value;
-  itemSelect.innerHTML = '<option value="">Select item</option>';
+const rawCategory = categoryEl.value;
+const category = normalizeCategoryKey(rawCategory);
+
+console.log("Category selected:", category);
+console.log("Cache bucket:", ITEM_PRICE_CACHE[category]);
+
+itemSelect.innerHTML = '<option value="">Select item</option>';
 
   if (!ITEM_PRICE_CACHE || Object.keys(ITEM_PRICE_CACHE).length === 0) {
   console.warn("Item cache not loaded yet");
@@ -216,7 +242,7 @@ function populateItems() {
   }
 
   // ⭐ Everything else comes from sheet
- if (!category || !ITEM_PRICE_CACHE[category]) {
+if (!category || !ITEM_PRICE_CACHE[category] || ITEM_PRICE_CACHE[category].length === 0) {
     toggleTabPaymentItem();
     return;
   }
