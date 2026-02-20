@@ -116,3 +116,54 @@ button:hover {
   font-weight: bold;
   font-size: 18px;
 }
+
+/* ===============================
+   🧾 RECEIPT STYLE CART
+=============================== */
+#cart {
+  list-style: none;
+  padding-left: 0;
+}
+
+#cart li {
+  background: #2f2f2f;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid #4caf50;
+  font-family: "Courier New", monospace;
+}
+
+.cart-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-price {
+  color: #9be79b;
+  font-size: 14px;
+}
+
+/* ===============================
+   ❌ REMOVE BUTTON (RED)
+=============================== */
+.remove-btn {
+  background-color: #c62828;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: auto;
+  min-width: 32px;
+}
+
+.remove-btn:hover {
+  background-color: #ff3b3b;
+}
+
