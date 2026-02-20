@@ -151,37 +151,16 @@ async function fetchItemPrices() {
   try {
     console.log("Fetching item prices...");
 
-    const resp = await fetch(WEBHOOK + "?action=getItemPrices");
+    const resp = await fetch(WEBHOOK + "?action=getItems");
     const data = await resp.json();
 
     console.log("Item prices received:", data);
 
-    if (!Array.isArray(data)) return;
+    // ✅ Expecting object keyed by category
+    if (!data || typeof data !== "object") return;
 
-    // reset cache
-    ITEM_PRICE_CACHE = {
-      BAGS: [],
-      JOINTS: [],
-      EDIBLES: []
-    };
-
-    data.forEach(row => {
-      const flavor = row.flavor;
-      const type = row.type;
-      const price = Number(row.price);
-
-      if (!flavor || !type || !price) return;
-
-      const label = `${flavor} ${type}`;
-
-      if (type.toLowerCase().includes("bag")) {
-        ITEM_PRICE_CACHE.BAGS.push([label, price]);
-      } else if (type.toLowerCase().includes("joint")) {
-        ITEM_PRICE_CACHE.JOINTS.push([label, price]);
-      } else {
-        ITEM_PRICE_CACHE.EDIBLES.push([label, price]);
-      }
-    });
+    // ✅ overwrite cache directly
+    ITEM_PRICE_CACHE = data;
 
   } catch (err) {
     console.error("Failed to fetch item prices:", err);
@@ -231,53 +210,16 @@ function populateItems() {
   }
 
   // ⭐ Everything else comes from sheet
-  if (!category || !DYNAMIC_ITEMS[category]) {
+ if (!category || !ITEM_PRICE_CACHE[category]) {
     toggleTabPaymentItem();
     return;
   }
 
-  DYNAMIC_ITEMS[category].forEach(entry => {
+  ITEM_PRICE_CACHE[category].forEach(entry => {
     const option = document.createElement("option");
     option.value = entry[0];
     option.dataset.price = Number(entry[1]);
     option.textContent = entry[2]; // already formatted
-    itemSelect.appendChild(option);
-  });
-
-  toggleTabPaymentItem();
-}
-  // =========================================
-  // 🔒 KEEP TAB HARD-CODED
-  // =========================================
-  let sourceList;
-
-  if (category === "TAB") {
-    sourceList = ITEM_DB.TAB;
-  } else {
-    // Use sheet data if available, otherwise fallback
-    sourceList =
-      ITEM_PRICE_CACHE[category]?.length > 0
-        ? ITEM_PRICE_CACHE[category]
-        : ITEM_DB[category];
-  }
-
-  if (!sourceList) return;
-
-  sourceList.forEach(entry => {
-    const option = document.createElement("option");
-    option.value = entry[0];
-    option.dataset.price = Number(entry[1]);
-
-    if (category === "TAB") {
-      option.textContent = entry[2];
-    } else if (category === "BAGS") {
-      option.textContent = `${entry[0]} - $${entry[1]} per bag`;
-    } else if (category === "JOINTS") {
-      option.textContent = `${entry[0]} - $${entry[1]} per joint`;
-    } else if (category === "EDIBLES") {
-      option.textContent = `${entry[0]} - $${entry[1]} each`;
-    }
-
     itemSelect.appendChild(option);
   });
 
