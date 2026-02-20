@@ -9,33 +9,6 @@ const WEBHOOK = "https://script.google.com/macros/s/AKfycbwIJ_jbcRi4aKpMye7n17L1
 // 🗄 ITEM DATABASE
 // =====================================================
 const ITEM_DB = {
-  BAGS: [
-    ["Skunk Bag", 1500],
-    ["OG Kush Bag", 1500],
-    ["White Widow Bag", 1500],
-    ["AK-47 Bag", 1500],
-    ["Amnesia Bag", 1500],
-    ["Purple Haze Bag", 1500],
-    ["Gelato Bag", 1500],
-    ["Zkittles Bag", 1500]
-  ],
-  JOINTS: [
-    ["Skunk Joint", 1800],
-    ["OG Kush Joint", 1800],
-    ["White Widow Joint", 1800],
-    ["AK-47 Joint", 1800],
-    ["Amnesia Joint", 1800],
-    ["Purple Haze Joint", 1800],
-    ["Gelato Joint", 1800],
-    ["Zkittles Joint", 1800]
-  ],
-  EDIBLES: [
-    ["Raspberry Gummy Bears", 2000],
-    ["Strawberry Gummy Bears", 2000],
-    ["AK-47 Cookies", 2000],
-    ["Skunk Cookies", 2000],
-    ["White Widow Cookies", 2000]
-  ],
   TAB: [
     ["TAB_CREATE", 0, "Create New Tab (Deposit)"],
     ["TAB_ADD", 0, "Add Funds to Existing Tab"]
@@ -52,20 +25,26 @@ let ITEM_PRICE_CACHE = {
 };
 
 // =====================================================
-// 🔄 CATEGORY NORMALIZER
+// 🔧 CATEGORY NORMALIZER (FUTURE-PROOF)
 // =====================================================
-function normalizeCategoryKey(key) {
-  if (!key) return "";
+function normalizeCategoryKey(raw) {
+  if (!raw) return "";
 
-  key = key.toString().trim().toUpperCase();
+  const key = raw.toString().trim().toUpperCase();
 
-  if (key === "BAG") return "BAGS";
-  if (key === "JOINT") return "JOINTS";
-  if (key === "EDIBLE") return "EDIBLES";
+  // Map sheet values → cache keys
+  const map = {
+    BAG: "BAGS",
+    BAGS: "BAGS",
+    JOINT: "JOINTS",
+    JOINTS: "JOINTS",
+    EDIBLE: "EDIBLES",
+    EDIBLES: "EDIBLES",
+    TAB: "TAB"
+  };
 
-  return key;
+  return map[key] || key;
 }
-
 // =====================================================
 // CART STATE
 // =====================================================
@@ -218,7 +197,8 @@ function populateItems() {
 const rawCategory = categoryEl.value;
 const category = normalizeCategoryKey(rawCategory);
 
-console.log("Category selected:", category);
+console.log("Category selected:", rawCategory);
+console.log("Normalized category:", category);
 console.log("Cache bucket:", ITEM_PRICE_CACHE[category]);
 
 itemSelect.innerHTML = '<option value="">Select item</option>';
