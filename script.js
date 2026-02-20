@@ -3,7 +3,7 @@ console.log("script loaded");
 // =====================================================
 // 🔗 WEBHOOK URL
 // =====================================================
-const WEBHOOK = "https://script.google.com/macros/s/AKfycbxYc8jIHr06EIhb8Ljx-VKGAG3TOaKDzqVrw7NkdIqbqCBCSd9yMIcRAjiikMoP6ENS/exec";
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbzLT5n9qF6LaTqrw3cXaIvnVtmRdP1Hpqk3toA_4gy0S4Bxd-7srMj8w3oJGywQMU17/exec";
 
 // =====================================================
 // 🗄 ITEM DATABASE
@@ -216,8 +216,36 @@ function populateItems() {
   const category = categoryEl.value;
   itemSelect.innerHTML = '<option value="">Select item</option>';
 
-  if (!category) return;
+  // ⭐ TAB stays static forever
+  if (category === "TAB" && ITEM_DB.TAB) {
+    ITEM_DB.TAB.forEach(entry => {
+      const option = document.createElement("option");
+      option.value = entry[0];
+      option.dataset.price = Number(entry[1]);
+      option.textContent = entry[2];
+      itemSelect.appendChild(option);
+    });
 
+    toggleTabPaymentItem();
+    return;
+  }
+
+  // ⭐ Everything else comes from sheet
+  if (!category || !DYNAMIC_ITEMS[category]) {
+    toggleTabPaymentItem();
+    return;
+  }
+
+  DYNAMIC_ITEMS[category].forEach(entry => {
+    const option = document.createElement("option");
+    option.value = entry[0];
+    option.dataset.price = Number(entry[1]);
+    option.textContent = entry[2]; // already formatted
+    itemSelect.appendChild(option);
+  });
+
+  toggleTabPaymentItem();
+}
   // =========================================
   // 🔒 KEEP TAB HARD-CODED
   // =========================================
