@@ -324,6 +324,20 @@ function addItem() {
   let lineTotal = 0;
   let tabAction = "";
 
+// =====================================================
+// 🧾 REMOVE ITEM FROM CART
+// =====================================================
+  
+  function removeItem(index) {
+  if (index < 0 || index >= cart.length) return;
+
+  total -= cart[index].lineTotal;
+  cart.splice(index, 1);
+  renderCart();
+}
+
+window.removeItem = removeItem;
+
   // =============================
   // TAB CREATE
   // =============================
