@@ -6,97 +6,105 @@
 </head>
 <body>
 
-<img src="image.png" alt="KWRP White Widow Logo" width="150">
-<h1>KWRP White Widow POS</h1>
-
-<h2>Order Entry</h2>
-
-<!-- ================= EMPLOYEE ================= -->
-Employee:
-<select id="employee" required>
-  <option value="">Select Employee</option>
-</select>
-<br><br>
-
-
-<!-- ================= BUYER ================= -->
-Buyer:
-<input id="buyer" placeholder="Enter buyer name" required>
-<br><br>
-
-<!-- ================= CATEGORY ================= -->
-Category:
-<select id="category" onchange="populateItems()">
-  <option value="">Select Category</option>
-  <option value="BAGS">Bags</option>
-  <option value="JOINTS">Joints</option>
-  <option value="EDIBLES">Edibles</option>
-  <option value="TAB">Tab Actions</option>
-</select>
-<br><br>
-
-<!-- ================= ITEM ================= -->
-Item:
-<select id="item" onchange="toggleTabPaymentItem(); toggleTabNameField();">
-  <option value="">Select item</option>
-</select>
-
-<span id="qtyLabel">Quantity:</span>
-<input id="qty" type="number" value="1" min="1">
-
-<!-- TAB AMOUNT (hidden by default) -->
-<span id="tabAmountLabel" style="display:none;">Amount to Add:</span>
-<input id="tabPaymentAmount"
-       type="number"
-       min="1"
-       style="display:none;"
-       placeholder="Enter dollar amount">
-
-<!-- NEW TAB NAME (only when TAB_CREATE selected) -->
-<div id="newTabBlock" style="display:none;">
-  New Tab Name:
-  <input id="newTabName" placeholder="Enter new tab name">
+<!-- ✅ CENTERED TITLE AREA -->
+<div class="pos-header">
+  <img src="image.png" alt="KWRP White Widow Logo" width="150">
+  <h1 class="pos-title">KWRP White Widow POS</h1>
 </div>
 
-<!-- EXISTING TAB SELECT (only when TAB_ADD selected) -->
-<div id="existingTabBlock" style="display:none;">
-  Select Existing Tab:
-  <select id="existingTabSelect">
-    <option value="">Select Tab</option>
-    <!-- JS will populate this dynamically -->
-  </select>
+<!-- ✅ MAIN TWO-COLUMN WRAPPER -->
+<div class="pos-wrapper">
+
+  <!-- ================= LEFT PANEL: ORDER ENTRY ================= -->
+  <div class="order-panel">
+    <h2>Order Entry</h2>
+
+    Employee:
+    <select id="employee" required>
+      <option value="">Select Employee</option>
+    </select>
+    <br><br>
+
+    Buyer:
+    <input id="buyer" placeholder="Enter buyer name" required>
+    <br><br>
+
+    Category:
+    <select id="category" onchange="populateItems()">
+      <option value="">Select Category</option>
+      <option value="BAGS">Bags</option>
+      <option value="JOINTS">Joints</option>
+      <option value="EDIBLES">Edibles</option>
+      <option value="TAB">Tab Actions</option>
+    </select>
+    <br><br>
+
+    Item:
+    <select id="item" onchange="toggleTabPaymentItem(); toggleTabNameField();">
+      <option value="">Select item</option>
+    </select>
+
+    <span id="qtyLabel">Quantity:</span>
+    <input id="qty" type="number" value="1" min="1">
+
+    <!-- TAB AMOUNT -->
+    <span id="tabAmountLabel" style="display:none;">Amount to Add:</span>
+    <input id="tabPaymentAmount"
+           type="number"
+           min="1"
+           style="display:none;"
+           placeholder="Enter dollar amount">
+
+    <!-- NEW TAB -->
+    <div id="newTabBlock" style="display:none;">
+      New Tab Name:
+      <input id="newTabName" placeholder="Enter new tab name">
+    </div>
+
+    <!-- EXISTING TAB -->
+    <div id="existingTabBlock" style="display:none;">
+      Select Existing Tab:
+      <select id="existingTabSelect">
+        <option value="">Select Tab</option>
+      </select>
+    </div>
+
+    <br>
+    <button type="button" onclick="addItem()">Add to Cart</button>
+
+  </div>
+
+  <!-- ================= RIGHT PANEL: CART ================= -->
+  <div class="cart-panel">
+
+    <h2>Cart</h2>
+    <ul id="cart"></ul>
+
+    <h3>Total: $<span id="total">0</span></h3>
+
+    Payment Method:
+    <select id="payment" required onchange="toggleTabField()">
+      <option value="" disabled selected>Select Payment</option>
+      <option value="Cash">Cash</option>
+      <option value="Card">Card</option>
+      <option value="Tab">Tab (Charge Purchase to Tab)</option>
+    </select>
+
+    <div id="tabBlock" style="display:none;">
+      Tab:
+      <select id="tabSelect">
+        <option value="">Select Tab</option>
+      </select>
+    </div>
+
+    <br><br>
+    <button type="button" onclick="submitOrder()">Submit Order</button>
+
+  </div>
+
 </div>
 
-<button type="button" onclick="addItem()">Add to Cart</button>
-
-
-<!-- ================= CART ================= -->
-<h3>Cart</h3>
-<ul id="cart"></ul>
-
-<h3>Total: $<span id="total">0</span></h3>
-
-<!-- ================= PAYMENT ================= -->
-Payment Method:
-<select id="payment" required onchange="toggleTabField()">
-  <option value="" disabled selected>Select Payment</option>
-  <option value="Cash">Cash</option>
-  <option value="Card">Card</option>
-  <option value="Tab">Tab (Charge Purchase to Tab)</option>
-</select>
-
-<!-- TAB SELECT (only when charging purchase to tab) -->
-<div id="tabBlock" style="display:none;">
-  Tab:
-  <select id="tabSelect">
-    <option value="">Select Tab</option>
-  </select>
-</div>
-
-<br>
-
-
-<!-- ================= FORM ================= -->
+<!-- ================= FORM (UNCHANGED) ================= -->
 <form id="orderForm"
       action="https://script.google.com/macros/s/AKfycby9H6lJxqriT5Nizxol2rvES3-tI_yZ-h2YAVzli6gm2u8Rh76KVt_KOZZuVfIaosAA/exec"
       method="post"
@@ -107,9 +115,6 @@ Payment Method:
 
 <iframe name="hiddenIframe" style="display:none;"></iframe>
 
-<button type="button" onclick="submitOrder()">Submit Order</button>
-
-<!-- ================= SCRIPT ================= -->
 <script src="script.js"></script>
 
 </body>
