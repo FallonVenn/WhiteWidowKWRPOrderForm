@@ -43,6 +43,15 @@ const ITEM_DB = {
 };
 
 // =====================================================
+// 📡 ITEM PRICE CACHE (from sheet)
+// =====================================================
+let ITEM_PRICE_CACHE = {
+  BAGS: [],
+  JOINTS: [],
+  EDIBLES: []
+};
+
+// =====================================================
 // CART STATE
 // =====================================================
 let cart = [];
@@ -66,7 +75,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
  fetchTabs();
  fetchStaff();
-
+ fetchItemPrices();
+  
 });
 
 // =====================================================
@@ -134,6 +144,49 @@ async function fetchStaff() {
   }
 }
 
+// =====================================================
+// 💰 FETCH ITEM PRICES
+// =====================================================
+async function fetchItemPrices() {
+  try {
+    console.log("Fetching item prices...");
+
+    const resp = await fetch(WEBHOOK + "?action=getItemPrices");
+    const data = await resp.json();
+
+    console.log("Item prices received:", data);
+
+    if (!Array.isArray(data)) return;
+
+    // reset cache
+    ITEM_PRICE_CACHE = {
+      BAGS: [],
+      JOINTS: [],
+      EDIBLES: []
+    };
+
+    data.forEach(row => {
+      const flavor = row.flavor;
+      const type = row.type;
+      const price = Number(row.price);
+
+      if (!flavor || !type || !price) return;
+
+      const label = `${flavor} ${type}`;
+
+      if (type.toLowerCase().includes("bag")) {
+        ITEM_PRICE_CACHE.BAGS.push([label, price]);
+      } else if (type.toLowerCase().includes("joint")) {
+        ITEM_PRICE_CACHE.JOINTS.push([label, price]);
+      } else {
+        ITEM_PRICE_CACHE.EDIBLES.push([label, price]);
+      }
+    });
+
+  } catch (err) {
+    console.error("Failed to fetch item prices:", err);
+  }
+}
 
 // =====================================================
 // 💳 POPULATE PAYMENT TAB DROPDOWN
@@ -163,9 +216,26 @@ function populateItems() {
   const category = categoryEl.value;
   itemSelect.innerHTML = '<option value="">Select item</option>';
 
-  if (!category || !ITEM_DB[category]) return;
+  if (!category) return;
 
-  ITEM_DB[category].forEach(entry => {
+  // =========================================
+  // 🔒 KEEP TAB HARD-CODED
+  // =========================================
+  let sourceList;
+
+  if (category === "TAB") {
+    sourceList = ITEM_DB.TAB;
+  } else {
+    // Use sheet data if available, otherwise fallback
+    sourceList =
+      ITEM_PRICE_CACHE[category]?.length > 0
+        ? ITEM_PRICE_CACHE[category]
+        : ITEM_DB[category];
+  }
+
+  if (!sourceList) return;
+
+  sourceList.forEach(entry => {
     const option = document.createElement("option");
     option.value = entry[0];
     option.dataset.price = Number(entry[1]);
