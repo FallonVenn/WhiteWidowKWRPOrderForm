@@ -315,6 +315,7 @@ function addItem() {
 
   total += lineTotal;
   renderCart();
+  resetOrderEntryPartial(); 
 }
 
 // =====================================================
@@ -380,6 +381,7 @@ function submitOrder() {
       cart = [];
       total = 0;
       renderCart();
+      resetOrderEntryFull();
     })
     .catch(err => {
       console.error("Submit failed:", err);
