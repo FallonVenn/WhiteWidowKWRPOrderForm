@@ -3,7 +3,7 @@ console.log("script loaded");
 // =====================================================
 // 🔗 WEBHOOK URL
 // =====================================================
-const WEBHOOK = "https://script.google.com/macros/s/AKfycby7VGEd_RJeaZy6-SnWu4aNSC4cGYv0TTqDqXzEQLTcWmQsmoz0R0DVDkeWZxYA9AUP/exec";
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbwIJ_jbcRi4aKpMye7n17L1t5BgKFpYI4CdP_JmcFUfuWleMSOVoaDsTCqEqvmvn-JZ/exec";
 
 // =====================================================
 // 🗄 ITEM DATABASE
