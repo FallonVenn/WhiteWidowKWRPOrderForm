@@ -436,23 +436,20 @@ function renderCart() {
   cart.forEach((item, index) => {
     const li = document.createElement("li");
 
-    // text
-    const textSpan = document.createElement("span");
-    textSpan.textContent = `${item.name} x${item.qty} - $${item.lineTotal}`;
+    li.innerHTML = `
+      <span class="cart-line">
+        ${item.name} x${item.qty}
+        <span class="cart-price">$${item.lineTotal}</span>
+      </span>
+      <button class="remove-btn" onclick="removeItem(${index})">✕</button>
+    `;
 
-    // remove button
-    const btn = document.createElement("button");
-    btn.textContent = "Remove";
-    btn.style.marginLeft = "10px";
-    btn.onclick = () => removeCartItem(index);
-
-    li.appendChild(textSpan);
-    li.appendChild(btn);
     cartEl.appendChild(li);
   });
 
   if (totalEl) totalEl.textContent = total;
 }
+
 
 // =====================================================
 // 🏦 SUBMIT ORDER (FIXED + COMPLETE)
