@@ -64,7 +64,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const paymentEl = document.getElementById("payment");
   if (paymentEl) paymentEl.addEventListener("change", toggleTabField);
 
-  fetchTabs();
+ fetchTabs();
+ fetchStaff();
+
 });
 
 // =====================================================
@@ -100,6 +102,38 @@ async function fetchTabs() {
     console.error("Failed to fetch tabs:", err);
   }
 }
+
+// =====================================================
+// 👥 FETCH STAFF ROSTER
+// =====================================================
+async function fetchStaff() {
+  try {
+    console.log("Fetching staff...");
+
+    const resp = await fetch(WEBHOOK + "?action=getStaff");
+    const data = await resp.json();
+
+    console.log("Staff received:", data);
+
+    if (!Array.isArray(data)) return;
+
+    const employeeSelect = document.getElementById("employee");
+    if (!employeeSelect) return;
+
+    employeeSelect.innerHTML = '<option value="">Select Employee</option>';
+
+    data.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      employeeSelect.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Failed to fetch staff:", err);
+  }
+}
+
 
 // =====================================================
 // 💳 POPULATE PAYMENT TAB DROPDOWN
