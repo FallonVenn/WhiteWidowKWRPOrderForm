@@ -1,50 +1,29 @@
-console.log("script loaded");
+console.log("VU POS script loaded");
 
 // =====================================================
-// 🔗 WEBHOOK URL
+// WEB APP ENDPOINT
 // =====================================================
 const WEBHOOK = "https://script.google.com/macros/s/AKfycbwIJ_jbcRi4aKpMye7n17L1t5BgKFpYI4CdP_JmcFUfuWleMSOVoaDsTCqEqvmvn-JZ/exec";
 
 // =====================================================
-// 🗄 ITEM DATABASE
+// POS DATA CACHE
+//
+// Apps Script returns:
+// {
+//   "CATEGORY": [
+//     {
+//       name,
+//       price,
+//       category,
+//       type,
+//       ingredients,
+//       ...
+//     }
+//   ]
+// }
 // =====================================================
-const ITEM_DB = {
-  TAB: [
-    ["TAB_CREATE", 0, "Create New Tab (Deposit)"],
-    ["TAB_ADD", 0, "Add Funds to Existing Tab"]
-  ]
-};
+let ITEM_DATA_CACHE = {};
 
-// =====================================================
-// 📡 ITEM PRICE CACHE (from sheet)
-// =====================================================
-let ITEM_PRICE_CACHE = {
-  BAGS: [],
-  JOINTS: [],
-  EDIBLES: []
-};
-
-// =====================================================
-// 🔧 CATEGORY NORMALIZER (FUTURE-PROOF)
-// =====================================================
-function normalizeCategoryKey(raw) {
-  if (!raw) return "";
-
-  const key = raw.toString().trim().toUpperCase();
-
-  // Map sheet values → cache keys
-  const map = {
-    BAG: "BAGS",
-    BAGS: "BAGS",
-    JOINT: "JOINTS",
-    JOINTS: "JOINTS",
-    EDIBLE: "EDIBLES",
-    EDIBLES: "EDIBLES",
-    TAB: "TAB"
-  };
-
-  return map[key] || key;
-}
 // =====================================================
 // CART STATE
 // =====================================================
@@ -52,52 +31,75 @@ let cart = [];
 let total = 0;
 
 // =====================================================
-// INIT EVENTS
+// INIT
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
-  const categoryEl = document.getElementById("category");
-  if (categoryEl) categoryEl.addEventListener("change", populateItems);
+  document
+    .getElementById("category")
+    ?.addEventListener("change", populateItems);
 
-  const itemEl = document.getElementById("item");
-  if (itemEl) itemEl.addEventListener("change", () => {
-    toggleTabPaymentItem();
-    toggleTabNameField();
-  });
+  document
+    .getElementById("item")
+    ?.addEventListener("change", () => {
+      toggleTabPaymentItem();
+      toggleTabNameField();
+    });
 
-  const paymentEl = document.getElementById("payment");
-  if (paymentEl) paymentEl.addEventListener("change", toggleTabField);
+  document
+    .getElementById("payment")
+    ?.addEventListener("change", toggleTabField);
 
- fetchTabs();
- fetchStaff();
- fetchItemPrices();
-  
+  document
+    .getElementById("addItemButton")
+    ?.addEventListener("click", addItem);
+
+  document
+    .getElementById("calculateIngredientsButton")
+    ?.addEventListener("click", calculateIngredients);
+
+  document
+    .getElementById("submitOrderButton")
+    ?.addEventListener("click", submitOrder);
+
+  fetchTabs();
+  fetchStaff();
+  fetchItems();
 });
 
 // =====================================================
-// 🌐 FETCH EXISTING TABS
+// FETCH EXISTING TABS
 // =====================================================
 async function fetchTabs() {
   try {
     console.log("Fetching tabs...");
 
     const resp = await fetch(WEBHOOK + "?action=getTabs");
+
+    if (!resp.ok) {
+      throw new Error(`Tab request failed: ${resp.status}`);
+    }
+
     const data = await resp.json();
 
     console.log("Tabs received:", data);
 
     if (!Array.isArray(data)) return;
 
-    // payment dropdown
     populatePaymentTabs(data);
 
-    // existing tab dropdown (TAB_ADD)
-    const existingTabSelect = document.getElementById("existingTabSelect");
+    const existingTabSelect =
+      document.getElementById("existingTabSelect");
+
     if (existingTabSelect) {
-      existingTabSelect.innerHTML = '<option value="">Select Tab</option>';
+      existingTabSelect.innerHTML =
+        '<option value="">Select Tab</option>';
+
       data.forEach(tabName => {
         const opt = document.createElement("option");
+
         opt.value = tabName;
         opt.textContent = tabName;
+
         existingTabSelect.appendChild(opt);
       });
     }
@@ -108,28 +110,38 @@ async function fetchTabs() {
 }
 
 // =====================================================
-// 👥 FETCH STAFF ROSTER
+// FETCH STAFF ROSTER
 // =====================================================
 async function fetchStaff() {
   try {
     console.log("Fetching staff...");
 
     const resp = await fetch(WEBHOOK + "?action=getStaff");
+
+    if (!resp.ok) {
+      throw new Error(`Staff request failed: ${resp.status}`);
+    }
+
     const data = await resp.json();
 
     console.log("Staff received:", data);
 
     if (!Array.isArray(data)) return;
 
-    const employeeSelect = document.getElementById("employee");
+    const employeeSelect =
+      document.getElementById("employee");
+
     if (!employeeSelect) return;
 
-    employeeSelect.innerHTML = '<option value="">Select Employee</option>';
+    employeeSelect.innerHTML =
+      '<option value="">Select Employee</option>';
 
     data.forEach(name => {
       const opt = document.createElement("option");
+
       opt.value = name;
       opt.textContent = name;
+
       employeeSelect.appendChild(opt);
     });
 
@@ -139,218 +151,397 @@ async function fetchStaff() {
 }
 
 // =====================================================
-// 💰 FETCH ITEM PRICES
+// FETCH ITEMS / RECIPES
 // =====================================================
-async function fetchItemPrices() {
+async function fetchItems() {
   try {
-    console.log("Fetching item prices...");
+    console.log("Fetching POS items and recipes...");
 
     const resp = await fetch(WEBHOOK + "?action=getItems");
+
+    if (!resp.ok) {
+      throw new Error(`Item request failed: ${resp.status}`);
+    }
+
     const data = await resp.json();
 
-    console.log("Item prices received:", data);
+    console.log("POS items received:", data);
 
-    if (!data || typeof data !== "object") return;
+    if (
+      !data ||
+      typeof data !== "object" ||
+      Array.isArray(data)
+    ) {
+      throw new Error(
+        "POS items response was not an object."
+      );
+    }
 
-    // ✅ Normalize keys from Apps Script
-    const normalized = {};
+    ITEM_DATA_CACHE = data;
 
-    Object.keys(data).forEach(key => {
-      const fixedKey = normalizeCategoryKey(key);
-      normalized[fixedKey] = data[key];
-    });
-
-    ITEM_PRICE_CACHE = normalized;
-
-    console.log("ITEM_PRICE_CACHE normalized:", ITEM_PRICE_CACHE);
+    populateCategories();
 
   } catch (err) {
-    console.error("Failed to fetch item prices:", err);
+    console.error(
+      "Failed to fetch POS items:",
+      err
+    );
   }
 }
 
 // =====================================================
-// 💳 POPULATE PAYMENT TAB DROPDOWN
+// CATEGORY HELPERS
 // =====================================================
-function populatePaymentTabs(tabNames) {
-  const paymentSelect = document.getElementById("tabSelect");
-  if (!paymentSelect) return;
+function formatCategoryLabel(category) {
+  if (!category) return "";
 
-  paymentSelect.innerHTML = '<option value="">Select Tab</option>';
+  return category
+    .toString()
+    .trim()
+    .toLowerCase()
+    .split("-")
+    .map(
+      part =>
+        part.charAt(0).toUpperCase() +
+        part.slice(1)
+    )
+    .join("-")
+    .replace(
+      /\bMixed Drink\b/g,
+      "Mixed Drinks"
+    )
+    .replace(
+      /\bBeer\b/g,
+      "Beer"
+    )
+    .replace(
+      /\bEntree\b/g,
+      "Entree"
+    )
+    .replace(
+      /\bStarter\b/g,
+      "Starter"
+    );
+}
 
-  tabNames.forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    paymentSelect.appendChild(opt);
+function populateCategories() {
+  const categorySelect =
+    document.getElementById("category");
+
+  if (!categorySelect) return;
+
+  const categories =
+    Object.keys(ITEM_DATA_CACHE).filter(
+      category => {
+        const entries =
+          ITEM_DATA_CACHE[category];
+
+        return (
+          Array.isArray(entries) &&
+          entries.length > 0
+        );
+      }
+    );
+
+  categorySelect.innerHTML =
+    '<option value="">Select Category</option>';
+
+  categories.forEach(category => {
+    const opt =
+      document.createElement("option");
+
+    opt.value = category;
+    opt.textContent =
+      formatCategoryLabel(category);
+
+    categorySelect.appendChild(opt);
   });
+
+  console.log(
+    "POS categories loaded:",
+    categories
+  );
 }
 
 // =====================================================
-// 📦 POPULATE ITEMS
+// POPULATE ITEMS
 // =====================================================
 function populateItems() {
-  const categoryEl = document.getElementById("category");
-  const itemSelect = document.getElementById("item");
-  if (!categoryEl || !itemSelect) return;
+  const categorySelect =
+    document.getElementById("category");
 
-const rawCategory = categoryEl.value;
-const category = normalizeCategoryKey(rawCategory);
+  const itemSelect =
+    document.getElementById("item");
 
-console.log("Category selected:", rawCategory);
-console.log("Normalized category:", category);
-console.log("Cache bucket:", ITEM_PRICE_CACHE[category]);
-
-itemSelect.innerHTML = '<option value="">Select item</option>';
-
-  if (!ITEM_PRICE_CACHE || Object.keys(ITEM_PRICE_CACHE).length === 0) {
-  console.warn("Item cache not loaded yet");
-}
-
-  // ⭐ TAB stays static forever
-  if (category === "TAB" && ITEM_DB.TAB) {
-    ITEM_DB.TAB.forEach(entry => {
-      const option = document.createElement("option");
-      option.value = entry[0];
-      option.dataset.price = Number(entry[1]);
-      option.textContent = entry[2];
-      itemSelect.appendChild(option);
-    });
-
-    toggleTabPaymentItem();
+  if (!categorySelect || !itemSelect) {
     return;
   }
 
-  // ⭐ Everything else comes from sheet
-if (!category || !ITEM_PRICE_CACHE[category] || ITEM_PRICE_CACHE[category].length === 0) {
-    toggleTabPaymentItem();
-    return;
-  }
+  const category =
+    categorySelect.value;
 
-  ITEM_PRICE_CACHE[category].forEach(entry => {
-    const option = document.createElement("option");
-    option.value = entry[0];
-    option.dataset.price = Number(entry[1]);
-    option.textContent = entry[2]; // already formatted
-    itemSelect.appendChild(option);
+  const entries =
+    ITEM_DATA_CACHE[category] || [];
+
+  itemSelect.innerHTML =
+    '<option value="">Select item</option>';
+
+  entries.forEach((entry, index) => {
+    const opt =
+      document.createElement("option");
+
+    opt.value = entry.name;
+
+    opt.dataset.index =
+      String(index);
+
+    opt.dataset.price =
+      String(Number(entry.price) || 0);
+
+    opt.dataset.type =
+      entry.type || "PRODUCT";
+
+    opt.textContent =
+      `${entry.name} - $${Number(entry.price) || 0}`;
+
+    itemSelect.appendChild(opt);
   });
 
   toggleTabPaymentItem();
+  toggleTabNameField();
 }
 
 // =====================================================
-// 💳 TAB PAYMENTS INPUT
+// GET SELECTED ITEM DATA
+// =====================================================
+function getSelectedItemData() {
+  const category =
+    document.getElementById("category")?.value || "";
+
+  const itemSelect =
+    document.getElementById("item");
+
+  const selected =
+    itemSelect?.selectedOptions?.[0];
+
+  if (
+    !category ||
+    !selected ||
+    !selected.value
+  ) {
+    return null;
+  }
+
+  const index =
+    Number(selected.dataset.index);
+
+  const entries =
+    ITEM_DATA_CACHE[category] || [];
+
+  if (
+    !Number.isInteger(index) ||
+    !entries[index]
+  ) {
+    return null;
+  }
+
+  return entries[index];
+}
+
+// =====================================================
+// TAB PAYMENT INPUT
 // =====================================================
 function toggleTabPaymentItem() {
-  const itemValue = document.getElementById("item").value;
-  const qtyField = document.getElementById("qty");
-  const qtyLabel = document.getElementById("qtyLabel");
-  const tabAmountField = document.getElementById("tabPaymentAmount");
-  const tabAmountLabel = document.getElementById("tabAmountLabel");
+  const itemData =
+    getSelectedItemData();
 
-  if (!qtyField) return;
+  const isTabAction =
+    itemData &&
+    (
+      itemData.type === "TAB_CREATE" ||
+      itemData.type === "TAB_ADD"
+    );
 
-  if (itemValue === "TAB_CREATE" || itemValue === "TAB_ADD") {
+  const qtyField =
+    document.getElementById("qty");
+
+  const qtyLabel =
+    document.getElementById("qtyLabel");
+
+  const tabAmountField =
+    document.getElementById("tabPaymentAmount");
+
+  const tabAmountLabel =
+    document.getElementById("tabAmountLabel");
+
+  if (
+    !qtyField ||
+    !qtyLabel ||
+    !tabAmountField ||
+    !tabAmountLabel
+  ) {
+    return;
+  }
+
+  if (isTabAction) {
     qtyField.style.display = "none";
     qtyLabel.style.display = "none";
+
     qtyField.value = 1;
 
-    tabAmountField.style.display = "inline-block";
-    tabAmountLabel.style.display = "inline-block";
-    tabAmountField.required = true;
-  } else {
-    qtyField.style.display = "inline-block";
-    qtyLabel.style.display = "inline-block";
+    tabAmountField.style.display =
+      "inline-block";
 
-    tabAmountField.style.display = "none";
-    tabAmountLabel.style.display = "none";
+    tabAmountLabel.style.display =
+      "inline-block";
+
+    tabAmountField.required = true;
+
+  } else {
+    qtyField.style.display =
+      "inline-block";
+
+    qtyLabel.style.display =
+      "inline-block";
+
+    tabAmountField.style.display =
+      "none";
+
+    tabAmountLabel.style.display =
+      "none";
+
     tabAmountField.required = false;
     tabAmountField.value = "";
   }
 }
 
 // =====================================================
-// 💳 TAB NAME INPUT/DROPDOWN
+// TAB NAME INPUT / DROPDOWN
 // =====================================================
 function toggleTabNameField() {
-  const itemValue = document.getElementById("item").value;
-  const newTabBlock = document.getElementById("newTabBlock");
-  const existingTabBlock = document.getElementById("existingTabBlock");
+  const itemData =
+    getSelectedItemData();
 
-  if (!newTabBlock || !existingTabBlock) return;
+  const newTabBlock =
+    document.getElementById("newTabBlock");
 
-  if (itemValue === "TAB_CREATE") {
-    newTabBlock.style.display = "block";
-    existingTabBlock.style.display = "none";
-  } else if (itemValue === "TAB_ADD") {
-    newTabBlock.style.display = "none";
-    existingTabBlock.style.display = "block";
+  const existingTabBlock =
+    document.getElementById("existingTabBlock");
+
+  if (
+    !newTabBlock ||
+    !existingTabBlock
+  ) {
+    return;
+  }
+
+  if (
+    itemData?.type === "TAB_CREATE"
+  ) {
+    newTabBlock.style.display =
+      "block";
+
+    existingTabBlock.style.display =
+      "none";
+
+  } else if (
+    itemData?.type === "TAB_ADD"
+  ) {
+    newTabBlock.style.display =
+      "none";
+
+    existingTabBlock.style.display =
+      "block";
+
   } else {
-    newTabBlock.style.display = "none";
-    existingTabBlock.style.display = "none";
+    newTabBlock.style.display =
+      "none";
+
+    existingTabBlock.style.display =
+      "none";
   }
 }
 
 // =====================================================
-// 💳 TOGGLE PAYMENT TAB FIELD
+// PAYMENT TAB FIELD
 // =====================================================
 function toggleTabField() {
-  const payment = document.getElementById("payment").value;
-  const tabBlock = document.getElementById("tabBlock");
+  const payment =
+    document.getElementById("payment")?.value || "";
+
+  const tabBlock =
+    document.getElementById("tabBlock");
+
   if (tabBlock) {
-    tabBlock.style.display = payment === "Tab" ? "block" : "none";
+    tabBlock.style.display =
+      payment === "Tab"
+        ? "block"
+        : "none";
   }
 }
 
 // =====================================================
-// 🧾 ADD ITEM TO CART (SINGLE CLEAN VERSION)
+// ADD ITEM TO CART
 // =====================================================
 function addItem() {
-  const itemSelect = document.getElementById("item");
-  const qtyField = document.getElementById("qty");
-  const tabAmountField = document.getElementById("tabPaymentAmount");
-  const newTabName = document.getElementById("newTabName")?.value || "";
-  const existingTab = document.getElementById("existingTabSelect")?.value || "";
+  const itemData =
+    getSelectedItemData();
 
-  if (!itemSelect.value) {
+  const qtyField =
+    document.getElementById("qty");
+
+  const tabAmountField =
+    document.getElementById(
+      "tabPaymentAmount"
+    );
+
+  const newTabName =
+    document
+      .getElementById("newTabName")
+      ?.value
+      .trim() || "";
+
+  const existingTab =
+    document
+      .getElementById(
+        "existingTabSelect"
+      )
+      ?.value || "";
+
+  if (!itemData) {
     alert("Select an item first.");
     return;
   }
 
-  const itemName = itemSelect.value;
-  const pricePerUnit = Number(itemSelect.selectedOptions[0]?.dataset.price || 0);
+  let qty =
+    Number(qtyField?.value || 1);
 
-  let qty = Number(qtyField?.value || 1);
   let lineTotal = 0;
   let tabAction = "";
 
-// =====================================================
-// 🧾 REMOVE ITEM FROM CART
-// =====================================================
-  
-  function removeItem(index) {
-  if (index < 0 || index >= cart.length) return;
-
-  total -= cart[index].lineTotal;
-  cart.splice(index, 1);
-  renderCart();
-}
-
-window.removeItem = removeItem;
-
-  // =============================
+  // ===================================================
   // TAB CREATE
-  // =============================
-  if (itemName === "TAB_CREATE") {
-    const amount = Number(tabAmountField?.value);
+  // ===================================================
+  if (
+    itemData.type === "TAB_CREATE"
+  ) {
+    const amount =
+      Number(
+        tabAmountField?.value
+      );
 
     if (!newTabName) {
       alert("Enter new tab name.");
       return;
     }
 
-    if (!amount || amount <= 0) {
-      alert("Enter valid deposit amount.");
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+      alert(
+        "Enter a valid deposit amount."
+      );
       return;
     }
 
@@ -362,23 +553,37 @@ window.removeItem = removeItem;
       name: newTabName,
       qty,
       lineTotal,
-      tabAction
+      tabAction,
+      type: "TAB_CREATE",
+      category: itemData.category,
+      ingredients: []
     });
-  }
 
-  // =============================
+  // ===================================================
   // TAB ADD
-  // =============================
-  else if (itemName === "TAB_ADD") {
-    const amount = Number(tabAmountField?.value);
+  // ===================================================
+  } else if (
+    itemData.type === "TAB_ADD"
+  ) {
+    const amount =
+      Number(
+        tabAmountField?.value
+      );
 
     if (!existingTab) {
-      alert("Select existing tab.");
+      alert(
+        "Select an existing tab."
+      );
       return;
     }
 
-    if (!amount || amount <= 0) {
-      alert("Enter valid amount.");
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+      alert(
+        "Enter a valid amount."
+      );
       return;
     }
 
@@ -390,83 +595,381 @@ window.removeItem = removeItem;
       name: existingTab,
       qty,
       lineTotal,
-      tabAction
+      tabAction,
+      type: "TAB_ADD",
+      category: itemData.category,
+      ingredients: []
     });
-  }
 
-  // =============================
+  // ===================================================
   // NORMAL ITEM
-  // =============================
-  else {
-    if (!qty || qty <= 0) {
-      alert("Enter quantity.");
+  // ===================================================
+  } else {
+    if (
+      !Number.isFinite(qty) ||
+      qty <= 0
+    ) {
+      alert(
+        "Enter a valid quantity."
+      );
       return;
     }
 
-    lineTotal = pricePerUnit * qty;
+    qty = Math.floor(qty);
+
+    lineTotal =
+      (Number(itemData.price) || 0) *
+      qty;
 
     cart.push({
-      name: itemName,
+      name: itemData.name,
       qty,
       lineTotal,
-      tabAction: ""
+      tabAction: "",
+      type:
+        itemData.type || "PRODUCT",
+      category:
+        itemData.category,
+      ingredients:
+        Array.isArray(
+          itemData.ingredients
+        )
+          ? [...itemData.ingredients]
+          : [],
+      room:
+        itemData.room || "",
+      time:
+        itemData.time || ""
     });
   }
 
   total += lineTotal;
+
   renderCart();
-  resetOrderEntryPartial(); 
+  resetOrderEntryPartial();
 }
 
 // =====================================================
-// ❌ REMOVE ITEM FROM CART
+// REMOVE ITEM FROM CART
 // =====================================================
 function removeCartItem(index) {
-  if (index < 0 || index >= cart.length) return;
+  if (
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= cart.length
+  ) {
+    return;
+  }
 
-  // subtract from total first
-  total -= Number(cart[index].lineTotal || 0);
+  total -=
+    Number(
+      cart[index].lineTotal || 0
+    );
 
-  // remove item
   cart.splice(index, 1);
 
-  // safety clamp
-  if (total < 0) total = 0;
+  if (total < 0) {
+    total = 0;
+  }
 
   renderCart();
 }
 
 // =====================================================
-// 🧾 RENDER CART (WITH REMOVE BUTTON)
+// RENDER CART
 // =====================================================
 function renderCart() {
-  const cartEl = document.getElementById("cart");
-  const totalEl = document.getElementById("total");
+  const cartEl =
+    document.getElementById("cart");
+
+  const totalEl =
+    document.getElementById("total");
 
   if (!cartEl) return;
 
   cartEl.innerHTML = "";
 
   cart.forEach((item, index) => {
-    const li = document.createElement("li");
+    const li =
+      document.createElement("li");
 
-    li.innerHTML = `
-      <span class="cart-line">
-        ${item.name} x${item.qty}
-        <span class="cart-price">$${item.lineTotal}</span>
-      </span>
-      <button class="remove-btn" onclick="removeItem(${index})">✕</button>
-    `;
+    const line =
+      document.createElement("span");
+
+    line.className =
+      "cart-line";
+
+    const title =
+      document.createElement("span");
+
+    title.textContent =
+      `${item.name} x${item.qty}`;
+
+    const price =
+      document.createElement("span");
+
+    price.className =
+      "cart-price";
+
+    price.textContent =
+      `$${item.lineTotal}`;
+
+    line.appendChild(title);
+    line.appendChild(price);
+
+    const removeButton =
+      document.createElement(
+        "button"
+      );
+
+    removeButton.type = "button";
+    removeButton.className =
+      "remove-btn";
+
+    removeButton.textContent = "✕";
+
+    removeButton.addEventListener(
+      "click",
+      () => removeCartItem(index)
+    );
+
+    li.appendChild(line);
+    li.appendChild(removeButton);
 
     cartEl.appendChild(li);
   });
 
-  if (totalEl) totalEl.textContent = total;
+  if (totalEl) {
+    totalEl.textContent =
+      total
+        .toFixed(2)
+        .replace(/\.00$/, "");
+  }
+
+  const requirements =
+    document.getElementById(
+      "ingredientRequirements"
+    );
+
+  if (requirements) {
+    requirements.innerHTML =
+      "<p>Order changed. Calculate ingredients when ready.</p>";
+  }
 }
 
+// =====================================================
+// INGREDIENT CALCULATOR
+// =====================================================
+function calculateIngredients() {
+  const requirements = {};
+  const roomItems = [];
+  const skippedTabActions = [];
+
+  cart.forEach(item => {
+    // -----------------------------------------------
+    // TAB ACTIONS
+    // -----------------------------------------------
+    if (
+      item.type === "TAB_CREATE" ||
+      item.type === "TAB_ADD"
+    ) {
+      skippedTabActions.push(
+        item.name
+      );
+
+      return;
+    }
+
+    // -----------------------------------------------
+    // PRIVATE ROOMS
+    // -----------------------------------------------
+    if (
+      item.type === "PRIVATE_ROOM"
+    ) {
+      roomItems.push(
+        `${item.name} x${item.qty}`
+      );
+
+      return;
+    }
+
+    // -----------------------------------------------
+    // PRODUCTS
+    // -----------------------------------------------
+    if (
+      !Array.isArray(item.ingredients) ||
+      item.ingredients.length === 0
+    ) {
+      return;
+    }
+
+    item.ingredients.forEach(
+      ingredient => {
+        const name =
+          ingredient
+            .toString()
+            .trim();
+
+        if (!name) return;
+
+        requirements[name] =
+          (
+            requirements[name] || 0
+          ) +
+          Number(item.qty || 0);
+      }
+    );
+  });
+
+  const requirementsEl =
+    document.getElementById(
+      "ingredientRequirements"
+    );
+
+  if (!requirementsEl) {
+    return;
+  }
+
+  requirementsEl.innerHTML = "";
+
+  if (cart.length === 0) {
+    requirementsEl.innerHTML =
+      "<p>Cart is empty.</p>";
+
+    return;
+  }
+
+  // ===================================================
+  // INGREDIENT LIST
+  // ===================================================
+  const requirementEntries =
+    Object.entries(requirements)
+      .sort(
+        (a, b) =>
+          a[0].localeCompare(b[0])
+      );
+
+  if (
+    requirementEntries.length > 0
+  ) {
+    const list =
+      document.createElement("ul");
+
+    requirementEntries.forEach(
+      ([ingredient, amount]) => {
+        const li =
+          document.createElement(
+            "li"
+          );
+
+        li.textContent =
+          `${ingredient}: ${amount}`;
+
+        list.appendChild(li);
+      }
+    );
+
+    requirementsEl.appendChild(list);
+
+  } else {
+    const p =
+      document.createElement("p");
+
+    p.textContent =
+      "No recipe ingredients are required for the current cart.";
+
+    requirementsEl.appendChild(p);
+  }
+
+  // ===================================================
+  // PRIVATE ROOM INFO
+  // ===================================================
+  if (roomItems.length > 0) {
+    const roomTitle =
+      document.createElement("p");
+
+    roomTitle.innerHTML =
+      "<strong>Private Room:</strong>";
+
+    requirementsEl.appendChild(
+      roomTitle
+    );
+
+    const roomList =
+      document.createElement("ul");
+
+    roomItems.forEach(room => {
+      const li =
+        document.createElement(
+          "li"
+        );
+
+      li.textContent = room;
+
+      roomList.appendChild(li);
+    });
+
+    requirementsEl.appendChild(
+      roomList
+    );
+  }
+
+  // ===================================================
+  // TAB INFO
+  // ===================================================
+  if (
+    skippedTabActions.length > 0
+  ) {
+    const p =
+      document.createElement("p");
+
+    p.textContent =
+      "Tab actions do not consume recipe ingredients.";
+
+    requirementsEl.appendChild(p);
+  }
+}
 
 // =====================================================
-// 🏦 SUBMIT ORDER (FIXED + COMPLETE)
+// PAYMENT TABS
+// =====================================================
+function populatePaymentTabs(
+  tabNames
+) {
+  const paymentSelect =
+    document.getElementById(
+      "tabSelect"
+    );
+
+  if (!paymentSelect) {
+    return;
+  }
+
+  paymentSelect.innerHTML =
+    '<option value="">Select Tab</option>';
+
+  tabNames.forEach(name => {
+    const opt =
+      document.createElement(
+        "option"
+      );
+
+    opt.value = name;
+    opt.textContent = name;
+
+    paymentSelect.appendChild(opt);
+  });
+}
+
+// =====================================================
+// SUBMIT ORDER
+//
+// NOTE:
+// This still sends the order to the
+// existing POST endpoint.
+//
+// Ingredient deduction will be moved
+// server-side when sellOrder is implemented.
 // =====================================================
 function submitOrder() {
   if (cart.length === 0) {
@@ -474,113 +977,286 @@ function submitOrder() {
     return;
   }
 
-  const employee = document.getElementById("employee")?.value || "";
-  const buyer = document.getElementById("buyer")?.value || "";
-  const paymentType = document.getElementById("payment")?.value || "";
-  const tabName = document.getElementById("tabSelect")?.value || "";
-  const timestamp = new Date().toISOString();
+  const employee =
+    document
+      .getElementById("employee")
+      ?.value
+      .trim() || "";
 
-  const readableSummary = cart
-    .map(i => `${i.name} x${i.qty} - $${i.lineTotal}`)
-    .join(" | ");
+  const buyer =
+    document
+      .getElementById("buyer")
+      ?.value
+      .trim() || "";
 
-  const orderJSON = JSON.stringify(cart);
+  const paymentType =
+    document
+      .getElementById("payment")
+      ?.value || "";
 
-  const formData = new URLSearchParams();
-  formData.append("timestamp", timestamp);
-  formData.append("employee", employee);
-  formData.append("buyer", buyer);
-  formData.append("paymentType", paymentType);
-  formData.append("tabName", tabName);
-  formData.append("orderSummary", readableSummary);
-  formData.append("orderJSON", orderJSON);
-  formData.append("total", total);
+  const tabName =
+    document
+      .getElementById("tabSelect")
+      ?.value || "";
 
-  fetch(WEBHOOK, {
-    method: "POST",
-    body: formData
-  })
-    .then(res => res.text())
+  // ===================================================
+  // VALIDATION
+  // ===================================================
+  if (!employee) {
+    alert(
+      "Select an employee."
+    );
+    return;
+  }
+
+  if (!buyer) {
+    alert(
+      "Enter the buyer name."
+    );
+    return;
+  }
+
+  if (!paymentType) {
+    alert(
+      "Select a payment method."
+    );
+    return;
+  }
+
+  if (
+    paymentType === "Tab" &&
+    !tabName
+  ) {
+    alert(
+      "Select a tab."
+    );
+    return;
+  }
+
+  const timestamp =
+    new Date().toISOString();
+
+  const readableSummary =
+    cart
+      .map(
+        item =>
+          `${item.name} x${item.qty} - $${item.lineTotal}`
+      )
+      .join(" | ");
+
+  const orderJSON =
+    JSON.stringify(cart);
+
+  const formData =
+    new URLSearchParams();
+
+  formData.append(
+    "timestamp",
+    timestamp
+  );
+
+  formData.append(
+    "employee",
+    employee
+  );
+
+  formData.append(
+    "buyer",
+    buyer
+  );
+
+  formData.append(
+    "paymentType",
+    paymentType
+  );
+
+  formData.append(
+    "tabName",
+    tabName
+  );
+
+  formData.append(
+    "orderSummary",
+    readableSummary
+  );
+
+  formData.append(
+    "orderJSON",
+    orderJSON
+  );
+
+  formData.append(
+    "total",
+    total.toFixed(2)
+  );
+
+  fetch(
+    WEBHOOK,
+    {
+      method: "POST",
+      body: formData
+    }
+  )
+    .then(async res => {
+      const text =
+        await res.text();
+
+      if (!res.ok) {
+        throw new Error(
+          `Submit failed: ${res.status} ${text}`
+        );
+      }
+
+      return text;
+    })
+
     .then(data => {
-      console.log("Webhook response:", data);
-      alert("Order submitted.");
+      console.log(
+        "Webhook response:",
+        data
+      );
+
+      alert(
+        "Order submitted."
+      );
 
       cart = [];
       total = 0;
+
       renderCart();
       resetOrderEntryFull();
     })
+
     .catch(err => {
-      console.error("Submit failed:", err);
-      alert("Submit failed. Check console.");
+      console.error(
+        "Submit failed:",
+        err
+      );
+
+      alert(
+        err.message ||
+        "Submit failed. Check console."
+      );
     });
 }
 
 // =====================================================
-// 🔄 RESET ORDER ENTRY (PARTIAL - after Add to Cart)
+// RESET ORDER ENTRY
 // =====================================================
 function resetOrderEntryPartial() {
-  // Category
-  const category = document.getElementById("category");
-  if (category) category.value = "";
+  const category =
+    document.getElementById(
+      "category"
+    );
 
-  // Item dropdown
-  const item = document.getElementById("item");
-  if (item) item.innerHTML = '<option value="">Select item</option>';
+  if (category) {
+    category.value = "";
+  }
 
-  // Quantity
-  const qty = document.getElementById("qty");
-  if (qty) qty.value = 1;
+  const item =
+    document.getElementById(
+      "item"
+    );
 
-  // Tab amount
-  const tabAmount = document.getElementById("tabPaymentAmount");
-  if (tabAmount) tabAmount.value = "";
+  if (item) {
+    item.innerHTML =
+      '<option value="">Select item</option>';
+  }
 
-  // Tab name fields
-  const newTabName = document.getElementById("newTabName");
-  if (newTabName) newTabName.value = "";
+  const qty =
+    document.getElementById(
+      "qty"
+    );
 
-  const existingTab = document.getElementById("existingTabSelect");
-  if (existingTab) existingTab.value = "";
+  if (qty) {
+    qty.value = 1;
+  }
 
-  // Hide tab UI
+  const tabAmount =
+    document.getElementById(
+      "tabPaymentAmount"
+    );
+
+  if (tabAmount) {
+    tabAmount.value = "";
+  }
+
+  const newTabName =
+    document.getElementById(
+      "newTabName"
+    );
+
+  if (newTabName) {
+    newTabName.value = "";
+  }
+
+  const existingTab =
+    document.getElementById(
+      "existingTabSelect"
+    );
+
+  if (existingTab) {
+    existingTab.value = "";
+  }
+
   toggleTabPaymentItem();
   toggleTabNameField();
 }
 
-// =====================================================
-// 🔄 RESET ORDER ENTRY (FULL - after Submit)
-// =====================================================
 function resetOrderEntryFull() {
   resetOrderEntryPartial();
 
-  // Employee
-  const employee = document.getElementById("employee");
-  if (employee) employee.value = "";
+  const employee =
+    document.getElementById(
+      "employee"
+    );
 
-  // Buyer
-  const buyer = document.getElementById("buyer");
-  if (buyer) buyer.value = "";
+  if (employee) {
+    employee.value = "";
+  }
 
-  // Payment
-  const payment = document.getElementById("payment");
-  if (payment) payment.selectedIndex = 0;
+  const buyer =
+    document.getElementById(
+      "buyer"
+    );
 
-  // Payment tab dropdown
-  const tabSelect = document.getElementById("tabSelect");
-  if (tabSelect) tabSelect.value = "";
+  if (buyer) {
+    buyer.value = "";
+  }
+
+  const payment =
+    document.getElementById(
+      "payment"
+    );
+
+  if (payment) {
+    payment.selectedIndex = 0;
+  }
+
+  const tabSelect =
+    document.getElementById(
+      "tabSelect"
+    );
+
+  if (tabSelect) {
+    tabSelect.value = "";
+  }
 
   toggleTabField();
 }
 
 // =====================================================
-// 🌍 EXPOSE FUNCTIONS TO HTML
+// LEGACY INLINE-HANDLER SUPPORT
 // =====================================================
 window.addItem = addItem;
 window.submitOrder = submitOrder;
 window.populateItems = populateItems;
 window.toggleTabField = toggleTabField;
-window.toggleTabNameField = toggleTabNameField;
-window.toggleTabPaymentItem = toggleTabPaymentItem;
-window.removeCartItem = removeCartItem;
-
+window.toggleTabNameField =
+  toggleTabNameField;
+window.toggleTabPaymentItem =
+  toggleTabPaymentItem;
+window.removeCartItem =
+  removeCartItem;
+window.calculateIngredients =
+  calculateIngredients;
