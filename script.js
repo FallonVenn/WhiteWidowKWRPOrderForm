@@ -25,6 +25,81 @@ const WEBHOOK = "https://script.google.com/macros/s/AKfycbxr19xgp3Jnk1EIqhuGkFvB
 let ITEM_DATA_CACHE = {};
 
 // =====================================================
+// JSONP HELPER
+// =====================================================
+function loadJsonp(action) {
+  return new Promise((resolve, reject) => {
+    const callbackName =
+      `vuPOSCallback_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2)}`;
+
+    const script =
+      document.createElement("script");
+
+    let finished = false;
+
+    const cleanup = () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+
+      try {
+        delete window[callbackName];
+      } catch (err) {
+        window[callbackName] = undefined;
+      }
+    };
+
+    const timeout =
+      setTimeout(() => {
+        if (finished) return;
+
+        finished = true;
+        cleanup();
+
+        reject(
+          new Error(
+            `JSONP request timed out: ${action}`
+          )
+        );
+      }, 10000);
+
+    window[callbackName] = data => {
+      if (finished) return;
+
+      finished = true;
+      clearTimeout(timeout);
+
+      cleanup();
+
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      if (finished) return;
+
+      finished = true;
+      clearTimeout(timeout);
+
+      cleanup();
+
+      reject(
+        new Error(
+          `JSONP request failed: ${action}`
+        )
+      );
+    };
+
+    script.src =
+      `${WEBHOOK}?action=${encodeURIComponent(action)}` +
+      `&prefix=${encodeURIComponent(callbackName)}`;
+
+    document.head.appendChild(script);
+  });
+}
+
+// =====================================================
 // CART STATE
 // =====================================================
 let cart = [];
