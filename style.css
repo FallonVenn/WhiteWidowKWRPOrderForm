@@ -1,184 +1,420 @@
-/* ===============================
-   🌙 BASE THEME
-=============================== */
-body {
-  background-color: #222;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+/* =====================================================
+   GLOBAL
+   ===================================================== */
 
-  /* ⭐ center whole POS */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
+* {
+  box-sizing: border-box;
 }
 
-/* ===============================
-   🏷 HEADER / LOGO
-=============================== */
+body {
+  margin: 0;
+  padding: 30px 20px 40px;
+  background: #222;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+
 .pos-header {
   text-align: center;
-  width: 100%;
-  margin-top: 20px;
+  margin-bottom: 35px;
 }
 
 .pos-header img {
   display: block;
-  margin: 0 auto 10px auto;
+  margin: 0 auto 5px;
   max-width: 150px;
   height: auto;
 }
 
-/* ===============================
-   🏷 TITLE
-=============================== */
 .pos-title {
-  text-align: center;
-  width: 100%;
-  margin-top: 10px;
-}
-
-/* ===============================
-   🧱 MAIN POS LAYOUT
-=============================== */
-.pos-wrapper {
-  display: grid;
-  grid-template-columns: 420px 420px;
-  gap: 40px;
-
-  margin-top: 20px;
-  padding: 20px;
-}
-
-/* ===============================
-   📦 PANELS
-=============================== */
-.order-panel,
-.cart-panel {
-  background-color: #2b2b2b;
-  padding: 20px;
-  border-radius: 10px;
-  border: 1px solid #444;
-  box-shadow: 0 0 10px rgba(0,0,0,0.4);
-}
-
-/* ⭐ make cart panel fixed height */
-.cart-panel {
-  display: flex;
-  flex-direction: column;
-  height: 600px; /* adjust if desired */
-}
-
-/* ===============================
-   🧾 FORM ELEMENTS
-=============================== */
-input,
-select,
-button {
-  background-color: #333;
-  color: #fff;
-  border: 1px solid #555;
-  padding: 6px;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-}
-
-button {
-  cursor: pointer;
-  background-color: #4caf50;
-  border: none;
+  margin: 0;
+  font-size: 34px;
   font-weight: bold;
 }
 
-button:hover {
-  background-color: #5fdc64;
+
+/* =====================================================
+   MAIN POS LAYOUT
+   ===================================================== */
+
+.pos-wrapper {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  gap: 20px;
+  align-items: stretch;
 }
 
-/* ===============================
-   🛒 SCROLLABLE CART LIST
-=============================== */
+
+/* =====================================================
+   PANELS
+   ===================================================== */
+
+.order-panel,
+.calculator-panel,
+.cart-panel {
+  background: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 20px;
+
+  min-width: 0;
+  overflow: hidden;
+}
+
+.order-panel h2,
+.calculator-panel h2,
+.cart-panel h2 {
+  margin-top: 0;
+  margin-bottom: 22px;
+  font-size: 25px;
+}
+
+
+/* =====================================================
+   FORM ELEMENTS
+   ===================================================== */
+
+label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 16px;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+
+  padding: 8px 10px;
+
+  background: #333;
+  color: #fff;
+
+  border: 1px solid #555;
+  border-radius: 5px;
+
+  font-size: 15px;
+}
+
+input::placeholder {
+  color: #aaa;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+
+/* =====================================================
+   QUANTITY / INLINE FIELDS
+   ===================================================== */
+
+#qtyLabel,
+#tabAmountLabel {
+  display: inline-block;
+  margin-top: 15px;
+  margin-bottom: 7px;
+}
+
+#qty,
+#tabPaymentAmount {
+  margin-bottom: 5px;
+}
+
+#newTabBlock,
+#existingTabBlock {
+  margin-top: 15px;
+}
+
+#newTabBlock label,
+#existingTabBlock label {
+  margin-bottom: 7px;
+}
+
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+
+button {
+  border: none;
+  border-radius: 5px;
+
+  background: #4caf50;
+  color: #fff;
+
+  padding: 10px 14px;
+  min-height: 40px;
+
+  font-size: 15px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    transform 0.05s ease;
+}
+
+button:hover {
+  background: #43a047;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  background: #555;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+
+/* =====================================================
+   ORDER ENTRY BUTTON
+   ===================================================== */
+
+#addItemButton {
+  width: 100%;
+  margin-top: 15px;
+}
+
+
+/* =====================================================
+   CALCULATOR
+   ===================================================== */
+
+.calculator-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.calculator-panel > p {
+  margin-top: 0;
+  margin-bottom: 18px;
+
+  color: #ccc;
+  line-height: 1.5;
+}
+
+#calculateIngredientsButton {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+#ingredientRequirements {
+  flex: 1;
+
+  background: #252525;
+  border: 1px solid #3d3d3d;
+  border-radius: 6px;
+
+  padding: 15px;
+
+  min-height: 150px;
+
+  color: #fff;
+}
+
+#ingredientRequirements p {
+  margin-top: 0;
+  color: #aaa;
+}
+
+#ingredientRequirements ul {
+  margin: 0;
+  padding-left: 22px;
+}
+
+#ingredientRequirements li {
+  margin-bottom: 7px;
+}
+
+
+/* =====================================================
+   CART
+   ===================================================== */
+
 #cart {
   list-style: none;
-  padding-left: 0;
-  padding-right: 6px;
 
+  margin: 0 0 20px;
+  padding: 0;
+
+  max-height: 420px;
   overflow-y: auto;
-  flex: 1;
-  max-height: 100%;
 }
 
-/* nice dark scrollbar */
-#cart::-webkit-scrollbar {
-  width: 8px;
-}
-
-#cart::-webkit-scrollbar-track {
-  background: #1f1f1f;
-  border-radius: 4px;
-}
-
-#cart::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 4px;
-}
-
-#cart::-webkit-scrollbar-thumb:hover {
-  background: #777;
-}
-
-/* ===============================
-   🧾 RECEIPT STYLE CART
-=============================== */
 #cart li {
-  background: #2f2f2f;
-  margin-bottom: 8px;
-  padding: 10px 12px;
-  border-radius: 6px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 8px;
+  padding: 12px 14px;
+
+  background: #303030;
   border-left: 4px solid #4caf50;
-  font-family: "Courier New", monospace;
+
+  border-radius: 5px;
 }
 
 .cart-line {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  min-width: 0;
+  flex: 1;
+}
+
+.cart-line > span:first-child {
+  overflow-wrap: anywhere;
 }
 
 .cart-price {
-  color: #9be79b;
-  font-size: 14px;
+  white-space: nowrap;
+  color: #4caf50;
 }
 
-/* ===============================
-   💰 TOTAL
-=============================== */
-#total {
-  font-weight: bold;
-  font-size: 18px;
-}
 
-/* ===============================
-   ❌ REMOVE BUTTON (RED)
-=============================== */
+/* =====================================================
+   REMOVE BUTTON
+   ===================================================== */
+
 .remove-btn {
-  background-color: #c62828;
-  border: none;
-  color: white;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  width: auto;
-  min-width: 32px;
+  flex-shrink: 0;
+
+  width: 32px;
+  min-height: 32px;
+
+  padding: 0;
+
+  background: #d32f2f;
+
+  font-size: 16px;
+  line-height: 32px;
 }
 
 .remove-btn:hover {
-  background-color: #ff3b3b;
+  background: #b71c1c;
+}
+
+
+/* =====================================================
+   TOTAL
+   ===================================================== */
+
+.cart-panel h3 {
+  margin: 10px 0 20px;
+  font-size: 20px;
+}
+
+
+/* =====================================================
+   PAYMENT
+   ===================================================== */
+
+#payment {
+  margin-bottom: 15px;
+}
+
+#tabBlock {
+  margin-top: 10px;
+}
+
+#tabBlock label {
+  margin-bottom: 7px;
+}
+
+
+/* =====================================================
+   SUBMIT
+   ===================================================== */
+
+#submitOrderButton {
+  width: 100%;
+  margin-top: 5px;
+}
+
+
+/* =====================================================
+   SCROLLBARS
+   ===================================================== */
+
+#cart::-webkit-scrollbar,
+#ingredientRequirements::-webkit-scrollbar {
+  width: 8px;
+}
+
+#cart::-webkit-scrollbar-track,
+#ingredientRequirements::-webkit-scrollbar-track {
+  background: #1c1c1c;
+}
+
+#cart::-webkit-scrollbar-thumb,
+#ingredientRequirements::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+#cart::-webkit-scrollbar-thumb:hover,
+#ingredientRequirements::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 1050px) {
+  .pos-wrapper {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calculator-panel {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+@media (max-width: 700px) {
+  body {
+    padding: 20px 12px 30px;
+  }
+
+  .pos-title {
+    font-size: 28px;
+  }
+
+  .pos-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .order-panel,
+  .calculator-panel,
+  .cart-panel {
+    grid-column: auto;
+  }
 }
