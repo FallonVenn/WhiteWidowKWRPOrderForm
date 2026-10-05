@@ -6,32 +6,48 @@
   <title>DSRP Vanilla Unicorn POS</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <div class="pos-header">
-  <img src="VULogoTransparent.png" alt="DSRP Vanilla Unicorn Logo" width="150">
+  <img
+    src="VULogoTransparent.png"
+    alt="DSRP Vanilla Unicorn Logo"
+    width="150"
+  >
   <h1 class="pos-title">DSRP Vanilla Unicorn POS</h1>
 </div>
 
 <div class="pos-wrapper">
 
+  <!-- =====================================================
+       ORDER ENTRY
+       ===================================================== -->
   <div class="order-panel">
+
     <h2>Order Entry</h2>
 
     <label for="employee">Employee:</label>
     <select id="employee" required>
       <option value="">Select Employee</option>
     </select>
+
     <br><br>
 
     <label for="buyer">Buyer:</label>
-    <input id="buyer" placeholder="Enter buyer name" required>
+    <input
+      id="buyer"
+      placeholder="Enter buyer name"
+      required
+    >
+
     <br><br>
 
     <label for="category">Category:</label>
     <select id="category">
       <option value="">Select Category</option>
     </select>
+
     <br><br>
 
     <label for="item">Item:</label>
@@ -40,65 +56,161 @@
     </select>
 
     <span id="qtyLabel">Quantity:</span>
-    <input id="qty" type="number" value="1" min="1">
+    <input
+      id="qty"
+      type="number"
+      value="1"
+      min="1"
+    >
 
-    <span id="tabAmountLabel" style="display:none;">Amount to Add:</span>
-    <input id="tabPaymentAmount"
-           type="number"
-           min="1"
-           style="display:none;"
-           placeholder="Enter dollar amount">
+    <span
+      id="tabAmountLabel"
+      style="display:none;"
+    >
+      Amount to Add:
+    </span>
 
-    <div id="newTabBlock" style="display:none;">
-      New Tab Name:
-      <input id="newTabName" placeholder="Enter new tab name">
+    <input
+      id="tabPaymentAmount"
+      type="number"
+      min="1"
+      style="display:none;"
+      placeholder="Enter dollar amount"
+    >
+
+    <div
+      id="newTabBlock"
+      style="display:none;"
+    >
+      <label for="newTabName">
+        New Tab Name:
+      </label>
+
+      <input
+        id="newTabName"
+        placeholder="Enter new tab name"
+      >
     </div>
 
-    <div id="existingTabBlock" style="display:none;">
-      Select Existing Tab:
+    <div
+      id="existingTabBlock"
+      style="display:none;"
+    >
+      <label for="existingTabSelect">
+        Select Existing Tab:
+      </label>
+
       <select id="existingTabSelect">
         <option value="">Select Tab</option>
       </select>
     </div>
 
     <br>
-    <button type="button" id="addItemButton">Add to Cart</button>
+
+    <button
+      type="button"
+      id="addItemButton"
+    >
+      Add to Cart
+    </button>
 
   </div>
 
+
+  <!-- =====================================================
+       INGREDIENT CALCULATOR
+       ===================================================== -->
+  <div class="calculator-panel">
+
+    <h2>Ingredient Requirements</h2>
+
+    <p>
+      Build an order, then calculate the ingredients
+      required to fulfill it.
+    </p>
+
+    <button
+      type="button"
+      id="calculateIngredientsButton"
+    >
+      Calculate Ingredients
+    </button>
+
+    <div id="ingredientRequirements">
+      <p>
+        No requirements calculated yet.
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       CART / PAYMENT
+       ===================================================== -->
   <div class="cart-panel">
 
     <h2>Cart</h2>
 
     <ul id="cart"></ul>
 
-    <h3>Total: $<span id="total">0</span></h3>
+    <h3>
+      Total:
+      $<span id="total">0</span>
+    </h3>
 
-    <div class="calculator-panel">
-      <h3>Ingredient Requirements</h3>
-      <button type="button" id="calculateIngredientsButton">Calculate Ingredients</button>
-      <div id="ingredientRequirements">
-        <p>Build an order, then calculate the ingredient requirements.</p>
-      </div>
-    </div>
+    <label for="payment">
+      Payment Method:
+    </label>
 
-    <label for="payment">Payment Method:</label>
-    <select id="payment" required>
-      <option value="" disabled selected>Select Payment</option>
-      <option value="Cash">Cash</option>
-      <option value="Card">Card</option>
-      <option value="Tab">Tab (Charge Purchase to Tab)</option>
+    <select
+      id="payment"
+      required
+    >
+      <option
+        value=""
+        disabled
+        selected
+      >
+        Select Payment
+      </option>
+
+      <option value="Cash">
+        Cash
+      </option>
+
+      <option value="Card">
+        Card
+      </option>
+
+      <option value="Tab">
+        Tab (Charge Purchase to Tab)
+      </option>
     </select>
 
-    <div id="tabBlock" style="display:none;">
-      Tab:
+    <div
+      id="tabBlock"
+      style="display:none;"
+    >
+      <label for="tabSelect">
+        Tab:
+      </label>
+
       <select id="tabSelect">
-        <option value="">Select Tab</option>
+        <option value="">
+          Select Tab
+        </option>
       </select>
     </div>
 
     <br><br>
-    <button type="button" id="submitOrderButton">Submit Order</button>
+
+    <button
+      type="button"
+      id="submitOrderButton"
+    >
+      Submit Order
+    </button>
 
   </div>
 
