@@ -148,17 +148,14 @@ async function fetchTabs() {
   try {
     console.log("Fetching tabs...");
 
-    const resp = await fetch(WEBHOOK + "?action=getTabs");
-
-    if (!resp.ok) {
-      throw new Error(`Tab request failed: ${resp.status}`);
-    }
-
-    const data = await resp.json();
+    const data = await loadJsonp("getTabs");
 
     console.log("Tabs received:", data);
 
-    if (!Array.isArray(data)) return;
+    if (!Array.isArray(data)) {
+      console.error("Expected tab array:", data);
+      return;
+    }
 
     populatePaymentTabs(data);
 
@@ -171,10 +168,8 @@ async function fetchTabs() {
 
       data.forEach(tabName => {
         const opt = document.createElement("option");
-
         opt.value = tabName;
         opt.textContent = tabName;
-
         existingTabSelect.appendChild(opt);
       });
     }
@@ -191,17 +186,14 @@ async function fetchStaff() {
   try {
     console.log("Fetching staff...");
 
-    const resp = await fetch(WEBHOOK + "?action=getStaff");
-
-    if (!resp.ok) {
-      throw new Error(`Staff request failed: ${resp.status}`);
-    }
-
-    const data = await resp.json();
+    const data = await loadJsonp("getStaff");
 
     console.log("Staff received:", data);
 
-    if (!Array.isArray(data)) return;
+    if (!Array.isArray(data)) {
+      console.error("Expected staff array:", data);
+      return;
+    }
 
     const employeeSelect =
       document.getElementById("employee");
@@ -213,10 +205,8 @@ async function fetchStaff() {
 
     data.forEach(name => {
       const opt = document.createElement("option");
-
       opt.value = name;
       opt.textContent = name;
-
       employeeSelect.appendChild(opt);
     });
 
@@ -232,13 +222,7 @@ async function fetchItems() {
   try {
     console.log("Fetching POS items and recipes...");
 
-    const resp = await fetch(WEBHOOK + "?action=getItems");
-
-    if (!resp.ok) {
-      throw new Error(`Item request failed: ${resp.status}`);
-    }
-
-    const data = await resp.json();
+    const data = await loadJsonp("getItems");
 
     console.log("POS items received:", data);
 
@@ -257,10 +241,7 @@ async function fetchItems() {
     populateCategories();
 
   } catch (err) {
-    console.error(
-      "Failed to fetch POS items:",
-      err
-    );
+    console.error("Failed to fetch POS items:", err);
   }
 }
 
