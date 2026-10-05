@@ -3,7 +3,7 @@ console.log("VU POS script loaded");
 // =====================================================
 // WEB APP ENDPOINT
 // =====================================================
-const WEBHOOK = "https://script.google.com/macros/s/AKfycbxr19xgp3Jnk1EIqhuGkFvBC2FVPhRVsG8A369A3LYuVd72bhT_T_PuZaXX2wi6gbhf/exec";
+const WEBHOOK = "https://script.google.com/macros/s/AKfycbzFS_PjdXEalMw2dIPz4_F93J__cZU1xCodNxTQ6FfCADwOB5ZZjyaEOtcfk1g4vkrc/exec";
 
 // =====================================================
 // POS DATA CACHE
