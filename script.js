@@ -110,6 +110,7 @@ let isSubmittingOrder = false;
 // Unique ID for the current order.
 // Keep it unchanged during retries.
 let currentOrderId = createOrderId();
+console.log("Current VU Order ID:", currentOrderId);
 
 function createOrderId() {
   if (typeof crypto !== "undefined" &&
@@ -1108,6 +1109,7 @@ async function submitOrder() {
 
     const formData = new URLSearchParams();
     formData.append("requestId", currentOrderId);
+    console.log("Submitting VU Order ID:", currentOrderId);
     formData.append("timestamp", timestamp);
     formData.append("employee", employee);
     formData.append("buyer", buyer);
