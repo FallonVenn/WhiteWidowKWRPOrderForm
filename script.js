@@ -104,6 +104,7 @@ function loadJsonp(action) {
 // =====================================================
 let cart = [];
 let total = 0;
+let isSubmittingOrder = false;
 
 // =====================================================
 // INIT
@@ -1027,173 +1028,144 @@ function populatePaymentTabs(
 // Ingredient deduction will be moved
 // server-side when sellOrder is implemented.
 // =====================================================
-function submitOrder() {
+
+async function submitOrder() {
+  // Prevent repeated clicks while a sale is processing.
+  if (isSubmittingOrder) return;
+
   if (cart.length === 0) {
     alert("Cart is empty.");
     return;
   }
 
   const employee =
-    document
-      .getElementById("employee")
-      ?.value
-      .trim() || "";
-
+    document.getElementById("employee")?.value.trim() || "";
   const buyer =
-    document
-      .getElementById("buyer")
-      ?.value
-      .trim() || "";
-
+    document.getElementById("buyer")?.value.trim() || "";
   const paymentType =
-    document
-      .getElementById("payment")
-      ?.value || "";
-
+    document.getElementById("payment")?.value || "";
   const tabName =
-    document
-      .getElementById("tabSelect")
-      ?.value || "";
+    document.getElementById("tabSelect")?.value || "";
 
-  // ===================================================
-  // VALIDATION
-  // ===================================================
+  // Validate required fields before submitting.
   if (!employee) {
-    alert(
-      "Select an employee."
-    );
+    alert("Select an employee.");
     return;
   }
 
   if (!buyer) {
-    alert(
-      "Enter the buyer name."
-    );
+    alert("Enter the buyer name.");
     return;
   }
 
   if (!paymentType) {
-    alert(
-      "Select a payment method."
-    );
+    alert("Select a payment method.");
     return;
   }
 
-  if (
-    paymentType === "Tab" &&
-    !tabName
-  ) {
-    alert(
-      "Select a tab."
-    );
+  if (paymentType === "Tab" && !tabName) {
+    alert("Select a tab.");
     return;
   }
 
-  const timestamp =
-    new Date().toISOString();
+  const submitButton =
+    document.getElementById("submitOrderButton") ||
+    document.querySelector('button[onclick="submitOrder()"]');
 
-  const readableSummary =
-    cart
-      .map(
-        item =>
-          `${item.name} x${item.qty} - $${item.lineTotal}`
-      )
+  const originalButtonText = submitButton?.textContent;
+
+  // Lock immediately before starting the request.
+  isSubmittingOrder = true;
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+  }
+
+  try {
+    const timestamp = new Date().toISOString();
+
+    const readableSummary = cart
+      .map(item => `${item.name} x${item.qty} - $${item.lineTotal}`)
       .join(" | ");
 
-  const orderJSON =
-    JSON.stringify(cart);
+    const orderJSON = JSON.stringify(cart);
 
-  const formData =
-    new URLSearchParams();
+    const formData = new URLSearchParams();
+    formData.append("timestamp", timestamp);
+    formData.append("employee", employee);
+    formData.append("buyer", buyer);
+    formData.append("paymentType", paymentType);
+    formData.append("tabName", tabName);
+    formData.append("orderSummary", readableSummary);
+    formData.append("orderJSON", orderJSON);
+    formData.append("total", total.toFixed(2));
 
-  formData.append(
-    "timestamp",
-    timestamp
-  );
-
-  formData.append(
-    "employee",
-    employee
-  );
-
-  formData.append(
-    "buyer",
-    buyer
-  );
-
-  formData.append(
-    "paymentType",
-    paymentType
-  );
-
-  formData.append(
-    "tabName",
-    tabName
-  );
-
-  formData.append(
-    "orderSummary",
-    readableSummary
-  );
-
-  formData.append(
-    "orderJSON",
-    orderJSON
-  );
-
-  formData.append(
-    "total",
-    total.toFixed(2)
-  );
-
-  fetch(
-    WEBHOOK,
-    {
+    const response = await fetch(WEBHOOK, {
       method: "POST",
       body: formData
-    }
-  )
-    .then(async res => {
-      const text =
-        await res.text();
-
-      if (!res.ok) {
-        throw new Error(
-          `Submit failed: ${res.status} ${text}`
-        );
-      }
-
-      return text;
-    })
-
-    .then(data => {
-      console.log(
-        "Webhook response:",
-        data
-      );
-
-      alert(
-        "Order submitted."
-      );
-
-      cart = [];
-      total = 0;
-
-      renderCart();
-      resetOrderEntryFull();
-    })
-
-    .catch(err => {
-      console.error(
-        "Submit failed:",
-        err
-      );
-
-      alert(
-        err.message ||
-        "Submit failed. Check console."
-      );
     });
+
+    const responseText = await response.text();
+
+    let result;
+
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      throw new Error(
+        "The server response could not be verified. " +
+        "Check the Sales Log before trying again."
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `Server returned HTTP ${response.status}. ` +
+        "Check the Sales Log before retrying."
+      );
+    }
+
+    if (result.success !== true) {
+      throw new Error(
+        result.error ||
+        result.message ||
+        "The server did not confirm the sale."
+      );
+    }
+
+    console.log("Confirmed sale:", result);
+
+    // Clear the cart only after server confirmation.
+    cart = [];
+    total = 0;
+
+    renderCart();
+    resetOrderEntryFull();
+
+    alert("Order Submitted Successfully!");
+
+  } catch (err) {
+    console.error("Submit failed:", err);
+
+    alert(
+      "The sale could not be confirmed.\n\n" +
+      (err.message || "Unknown error.") +
+      "\n\nCheck the Sales Log before submitting again " +
+      "to avoid processing the order twice."
+    );
+
+  } finally {
+    isSubmittingOrder = false;
+
+    if (submitButton) {
+      submitButton.disabled = false;
+
+      if (originalButtonText !== undefined) {
+        submitButton.textContent = originalButtonText;
+      }
+    }
+  }
 }
 
 // =====================================================
