@@ -99,12 +99,27 @@ function loadJsonp(action) {
   });
 }
 
-// =====================================================
+
+ // =====================================================
 // CART STATE
 // =====================================================
 let cart = [];
 let total = 0;
 let isSubmittingOrder = false;
+
+// Unique ID for the current order.
+// Keep it unchanged during retries.
+let currentOrderId = createOrderId();
+
+function createOrderId() {
+  if (typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return Date.now().toString(36) +
+    "-" + Math.random().toString(36).slice(2);
+}
 
 // =====================================================
 // INIT
@@ -1092,6 +1107,7 @@ async function submitOrder() {
     const orderJSON = JSON.stringify(cart);
 
     const formData = new URLSearchParams();
+    formData.append("requestId", currentOrderId);
     formData.append("timestamp", timestamp);
     formData.append("employee", employee);
     formData.append("buyer", buyer);
@@ -1139,7 +1155,8 @@ async function submitOrder() {
     // Clear the cart only after server confirmation.
     cart = [];
     total = 0;
-
+    currentOrderId = createOrderId();
+    
     renderCart();
     resetOrderEntryFull();
 
